@@ -91,7 +91,7 @@
 <span class="text-[#e06c75]">&lt;/script&gt;</span>
 
 <span class="text-[#e06c75]">&lt;button</span> <span class="text-[#d19a66]">onclick</span><span class="text-[#abb2bf]">={'={'}</span><span class="text-[#61afef]">increment</span><span class="text-[#abb2bf]">&#125;&gt;</span>
-  clicks<span class="text-[#abb2bf]">:</span> <span class="text-[#abb2bf]">{'{'}</span><span class="text-[#e5c07b]">count</span><span class="text-[#abb2bf]">&#123;</span>
+  clicks<span class="text-[#abb2bf]">:</span> <span class="text-[#abb2bf]">{'{'}</span><span class="text-[#e5c07b]">count</span><span class="text-[#abb2bf]">&#125;</span>
 <span class="text-[#e06c75]">&lt;/button&gt;</span>
 
 <span class="text-[#e06c75]">&lt;p&gt;</span>doubled<span class="text-[#abb2bf]">:</span> <span class="text-[#abb2bf]">{'{'}</span><span class="text-[#e5c07b]">doubled</span><span class="text-[#abb2bf]">&#125;</span><span class="text-[#e06c75]">&lt;/p&gt;</span></pre>
