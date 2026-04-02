@@ -6,6 +6,7 @@
   interface Track { slug: string; title: string; }
   interface Module { id: number; slug: string; title: string; order_index: number; content: string | null; }
   interface Question { id: number; question: string; options: string[] | string; correct_index: number; explanation: string | null; }
+  interface PartAssessmentSimple { part_index: number; passed: boolean; }
 
   interface Props {
     data: PageData & {
@@ -22,6 +23,8 @@
       partAssessment: { passed: boolean; score: number } | null;
       partQuestions: Question[];
       partModules: Module[];
+      allPartAssessments: PartAssessmentSimple[];
+      allPartsPassed: boolean;
     };
   }
 
@@ -35,19 +38,24 @@
   const partIndex = $derived(data.partIndex);
   const isLastInPart = $derived(data.isLastInPart);
   const allPartModulesCompleted = $derived(data.allPartModulesCompleted);
-  // const partQuestions = $derived(data.partQuestions);
+  const allPartAssessments = $derived(data.allPartAssessments);
+  const allPartsPassed = $derived(data.allPartsPassed);
 
   let completedLocally = $state<boolean | null>(null);
   const isCompleted = $derived(completedLocally ?? data.isCompleted);
 
   let partAssessmentPassed = $state(false);
   let partAssessmentScore = $state<number | null>(null);
+
   $effect(() => {
-    partAssessmentPassed = data.partAssessment?.passed ?? false;
+    // Check both the direct assessment and allPartAssessments for the current part
+    const fromDirect = data.partAssessment?.passed ?? false;
+    const fromAll = data.allPartAssessments?.some(
+      pa => pa.part_index === data.partIndex && pa.passed
+    ) ?? false;
+    partAssessmentPassed = fromDirect || fromAll;
     partAssessmentScore = data.partAssessment?.score ?? null;
   });
-
-
 
   async function markComplete() {
     if (isCompleted) return;
@@ -58,6 +66,11 @@
       completedLocally = true;
       await invalidate('supabase:auth');
     }
+  }
+
+  // Returns true if the quiz for a given part has been passed
+  function isPartQuizPassed(pi: number): boolean {
+    return allPartAssessments.some(pa => pa.part_index === pi && pa.passed);
   }
 
   function parseMarkdown(content: string): string {
@@ -134,8 +147,8 @@
         })}
         {#if pModules.length > 0}
           {@const doneCount = pModules.filter(m => completedModuleIds.includes(m.id)).length}
-          {@const isActivePart = pModules.some(m => m.id === module.id)}
-          {@const quizPassed = isActivePart ? partAssessmentPassed : false}
+          <!-- {@const isActivePart = pModules.some(m => m.id === module.id)} -->
+          {@const quizPassed = isPartQuizPassed(pIdx)}
           {@const allDone = doneCount === pModules.length}
 
           <!-- Part header -->
@@ -184,7 +197,6 @@
           {/each}
 
           <!-- Quiz row — always shown after part modules -->
-          {@const quizActive = false}  <!-- quiz page has its own layout, not a module -->
           <a rel="external" href={allDone ? `/tracks/${track.slug}/part/${pIdx}/quiz` : '#'}
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group
               {quizPassed
@@ -228,6 +240,30 @@
           {/if}
         {/if}
       {/each}
+       <!-- Final Exam entry -->
+      <div class="mx-3 mt-3 border-t border-white/5 mb-3"></div>
+      {#if allPartsPassed}
+        <a rel="external" href="/tracks/{track.slug}/exam"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group hover:bg-white/4 border border-transparent">
+          <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center bg-[#FF3E00]/10">
+            <svg class="w-3 h-3 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 15l-2 5-3-1-1 3-4-4 3-1-1-3 5-2"/><circle cx="12" cy="8" r="5"/>
+            </svg>
+          </div>
+          <span class="text-[12px] font-light text-[#f0ede8]/35 group-hover:text-[#f0ede8]/70 transition-colors">
+            Final Exam
+          </span>
+        </a>
+      {:else}
+        <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-transparent opacity-30">
+          <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center bg-white/4">
+            <svg class="w-3 h-3 text-[#f0ede8]/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+          </div>
+          <span class="text-[12px] font-light text-[#f0ede8]/20">Final Exam</span>
+        </div>
+      {/if}
     </nav>
   </aside>
 

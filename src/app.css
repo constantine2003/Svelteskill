@@ -7,3 +7,27 @@ html, body {
   color: #f0ede8;
   min-height: 100vh;
 }
+
+/* //scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(240, 237, 232, 0.08);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(240, 237, 232, 0.15);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(240, 237, 232, 0.08) transparent;
+}

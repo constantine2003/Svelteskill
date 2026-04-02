@@ -16,16 +16,16 @@ export const load = async ({ locals, params }: RequestEvent) => {
 
   if (!track) throw error(404, 'Track not found');
 
-  // Single fetch for all modules
   const { data: allModulesRaw } = await locals.supabase
     .from('modules')
     .select('id, title, slug, order_index')
     .eq('track_id', track.id)
     .order('order_index');
 
-  const allModules = (allModulesRaw ?? []) as { id: number; title: string; slug: string; order_index: number }[];
+  const allModules = (allModulesRaw ?? []) as {
+    id: number; title: string; slug: string; order_index: number;
+  }[];
 
-  // Single fetch for user progress
   const { data: progressRaw } = await locals.supabase
     .from('user_progress')
     .select('module_id')
@@ -57,27 +57,51 @@ export const load = async ({ locals, params }: RequestEvent) => {
     throw redirect(303, `/tracks/${params?.slug}/modules/${firstIncomplete?.slug}`);
   }
 
-  const supabaseAny = locals.supabase as unknown as {
-    from: (table: string) => {
-      select: (cols: string) => {
-        eq: (col: string, val: unknown) => {
-          eq: (col: string, val: unknown) => {
-            eq: (col: string, val: unknown) => {
-              maybeSingle: () => Promise<{ data: { passed: boolean; score: number } | null }>;
+  // Separate typed cast for single assessment (3x eq + maybeSingle)
+  const { data: existingAssessment } = await (locals.supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (k: string, v: unknown) => {
+          eq: (k: string, v: unknown) => {
+            eq: (k: string, v: unknown) => {
+              maybeSingle: () => Promise<{
+                data: { passed: boolean; score: number } | null;
+              }>;
             };
           };
         };
       };
     };
-  };
-
-  const { data: existingAssessment } = await supabaseAny
+  })
     .from('part_assessments')
     .select('passed, score')
     .eq('user_id', user.id)
     .eq('track_id', track.id)
     .eq('part_index', partIndex)
     .maybeSingle();
+
+  // Separate typed cast for all assessments (2x eq, returns array)
+  const { data: allPartAssessmentsRaw } = await (locals.supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => {
+        eq: (k: string, v: unknown) => {
+          eq: (k: string, v: unknown) => Promise<{
+            data: { part_index: number; passed: boolean }[] | null;
+          }>;
+        };
+      };
+    };
+  })
+    .from('part_assessments')
+    .select('part_index, passed')
+    .eq('user_id', user.id)
+    .eq('track_id', track.id);
+
+  const allPartsPassed = [1, 2, 3, 4].every(pi =>
+    (allPartAssessmentsRaw ?? []).some(
+      (pa) => pa.part_index === pi && pa.passed
+    )
+  );
 
   const { data: questionsRaw } = await locals.supabase
     .from('questions')
@@ -122,5 +146,6 @@ export const load = async ({ locals, params }: RequestEvent) => {
     isLastPart: partIndex === 4,
     allModules,
     completedModuleIds,
+    allPartsPassed,
   };
 };
