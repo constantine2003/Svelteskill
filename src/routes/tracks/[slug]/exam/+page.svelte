@@ -80,7 +80,7 @@
   );
 
   async function submitExam() {
-    if (submitting) return;
+    if (submitting || submitted) return;  // ← also guard against submitted
     if (timerInterval) clearInterval(timerInterval);
     submitting = true;
 
@@ -92,24 +92,25 @@
     correctCount = correct;
     score = Math.round((correct / questions.length) * 100);
     passed = score >= 80;
-    submitted = true;
-    submitting = false;
 
-    // Save exam attempt
-    await (supabase as unknown as { from: (t: string) => { insert: (v: unknown) => Promise<unknown> } })
-    .from('exam_attempts')
-    .insert({
+    await (supabase as unknown as {
+      from: (t: string) => { insert: (v: unknown) => Promise<unknown> };
+    })
+      .from('exam_attempts')
+      .insert({
         user_id: data.userId,
         track_id: track.id,
         score,
         passed,
         answers: selectedAnswers
-    });
+      });
 
-    // If passed redirect to result page
+    submitted = true;   // ← set AFTER the save
+    submitting = false;
+
     if (passed) {
-        // eslint-disable-next-line svelte/no-navigation-without-resolve
-        await goto(`/tracks/${track.slug}/exam/result`);
+      // eslint-disable-next-line svelte/no-navigation-without-resolve
+      await goto(`/tracks/${track.slug}/exam/result`);
     }
   }
 
