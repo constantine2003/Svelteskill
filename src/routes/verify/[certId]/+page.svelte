@@ -40,21 +40,6 @@
 <div class="min-h-screen bg-[#1a1a1a] flex flex-col">
 
   <!-- Simple nav — no auth needed -->
-  <nav class="border-b border-white/8 px-8 py-4 flex items-center justify-between">
-    <a rel="external" href="/" class="flex items-center gap-2.5">
-      <div class="w-6 h-6 bg-[#FF3E00] rounded-md flex items-center justify-center">
-        <svg viewBox="0 0 98.1 118" class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg">
-          <path fill="white" d="M91.8 15.6C80.9-.1 59.2-4.7 43.6 5.2L16.1 22.8C8.6 27.5 3.4 35.2 1.9 43.9c-1.3 7.3-.2 14.8 3.3 21.3-2.4 3.6-4 7.6-4.7 11.8-1.6 8.9.5 18.1 5.7 25.4 11 15.7 32.7 20.3 48.2 10.4l27.5-17.6c7.5-4.7 12.7-12.4 14.2-21.1 1.3-7.3.2-14.8-3.3-21.3 2.4-3.6 4-7.6 4.7-11.8 1.7-8.9-.4-18.1-5.7-25.4"/>
-        </svg>
-      </div>
-      <span class="font-serif italic text-[#f0ede8] text-base">SvelteSkill</span>
-    </a>
-    <a rel="external" href="/auth"
-      class="font-mono text-[11px] text-[#f0ede8]/30 hover:text-[#f0ede8]/60 transition-colors">
-      Get certified →
-    </a>
-  </nav>
-
   <main class="flex-1 flex items-center justify-center px-8 py-16">
 
     {#if certificate}
@@ -83,10 +68,8 @@
             <!-- Cert header -->
             <div class="flex items-center justify-between mb-14">
               <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 bg-[#FF3E00] rounded-lg flex items-center justify-center">
-                  <svg viewBox="0 0 98.1 118" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="white" d="M91.8 15.6C80.9-.1 59.2-4.7 43.6 5.2L16.1 22.8C8.6 27.5 3.4 35.2 1.9 43.9c-1.3 7.3-.2 14.8 3.3 21.3-2.4 3.6-4 7.6-4.7 11.8-1.6 8.9.5 18.1 5.7 25.4 11 15.7 32.7 20.3 48.2 10.4l27.5-17.6c7.5-4.7 12.7-12.4 14.2-21.1 1.3-7.3.2-14.8-3.3-21.3 2.4-3.6 4-7.6 4.7-11.8 1.7-8.9-.4-18.1-5.7-25.4"/>
-                  </svg>
+                <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
                 </div>
                 <span class="font-serif italic text-lg text-[#f0ede8]">SvelteSkill</span>
               </div>
@@ -197,13 +180,19 @@
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-white/8 px-8 py-5 flex items-center justify-between">
-    <span class="font-serif italic text-[#f0ede8]/20 text-sm">
-      <span class="text-[#FF3E00]">Svelte</span>Skill
-    </span>
-    <span class="font-mono text-[10px] text-[#f0ede8]/15">
-      Community-driven · Free forever
-    </span>
+  <footer class="border-t border-white/8 px-5 md:px-10 py-6 md:py-7 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#141414]">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
+      </div>
+      <span class="font-serif italic text-[#f0ede8]/40 text-[13px]">
+        <span class="text-[#FF3E00]">Svelte</span>Skill — built for the community
+      </span>
+    </div>
+    <div class="flex gap-6">
+      <a rel="external" href="/verify" class="font-mono text-[9px] uppercase tracking-widest text-[#f0ede8]/25 hover:text-[#f0ede8]/50 transition-colors no-underline">Verify</a>
+      <a rel="external" href="https://github.com" class="font-mono text-[9px] uppercase tracking-widest text-[#f0ede8]/25 hover:text-[#f0ede8]/50 transition-colors no-underline">GitHub</a>
+    </div>
   </footer>
 
 </div>
