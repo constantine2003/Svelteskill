@@ -46,7 +46,11 @@
   const nextModule = $derived(data.nextModule);
   const partIndex = $derived(data.partIndex);
   const isLastInPart = $derived(data.isLastInPart);
-  const allPartModulesCompleted = $derived(data.allPartModulesCompleted);
+
+  const allPartModulesCompleted = $derived(
+    data.partModules.every(m => completedModuleIds.includes(m.id))
+  );
+  
   const allPartAssessments = $derived(data.allPartAssessments);
   const allPartsPassed = $derived(data.allPartsPassed);
 

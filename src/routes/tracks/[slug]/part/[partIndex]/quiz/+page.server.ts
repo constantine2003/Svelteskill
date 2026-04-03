@@ -147,5 +147,6 @@ export const load = async ({ locals, params }: RequestEvent) => {
     allModules,
     completedModuleIds,
     allPartsPassed,
+    allPartAssessments: allPartAssessmentsRaw ?? []
   };
 };
