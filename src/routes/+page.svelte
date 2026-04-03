@@ -294,10 +294,8 @@
         <div class="p-7 md:p-10">
           <div class="flex items-center justify-between mb-8 md:mb-10">
             <div class="flex items-center gap-2">
-              <div class="w-[22px] h-[22px] bg-[#FF3E00] rounded-[4px] flex items-center justify-center">
-                <svg viewBox="0 0 98.1 118" class="w-3 h-3" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="white" d="M91.8 15.6C80.9-.1 59.2-4.7 43.6 5.2L16.1 22.8C8.6 27.5 3.4 35.2 1.9 43.9c-1.3 7.3-.2 14.8 3.3 21.3-2.4 3.6-4 7.6-4.7 11.8-1.6 8.9.5 18.1 5.7 25.4 11 15.7 32.7 20.3 48.2 10.4l27.5-17.6c7.5-4.7 12.7-12.4 14.2-21.1 1.3-7.3.2-14.8-3.3-21.3 2.4-3.6 4-7.6 4.7-11.8 1.7-8.9-.4-18.1-5.7-25.4"/>
-                </svg>
+              <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
               </div>
               <span class="font-serif italic text-[13px] text-[#f0ede8]">SvelteSkill</span>
             </div>
@@ -395,10 +393,8 @@
   <!-- FOOTER -->
   <footer class="border-t border-white/8 px-5 md:px-10 py-6 md:py-7 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#141414]">
     <div class="flex items-center gap-2">
-      <div class="w-5 h-5 bg-[#FF3E00] rounded flex items-center justify-center">
-        <svg viewBox="0 0 98.1 118" class="w-3 h-3" xmlns="http://www.w3.org/2000/svg">
-          <path fill="white" d="M91.8 15.6C80.9-.1 59.2-4.7 43.6 5.2L16.1 22.8C8.6 27.5 3.4 35.2 1.9 43.9c-1.3 7.3-.2 14.8 3.3 21.3-2.4 3.6-4 7.6-4.7 11.8-1.6 8.9.5 18.1 5.7 25.4 11 15.7 32.7 20.3 48.2 10.4l27.5-17.6c7.5-4.7 12.7-12.4 14.2-21.1 1.3-7.3.2-14.8-3.3-21.3 2.4-3.6 4-7.6 4.7-11.8 1.7-8.9-.4-18.1-5.7-25.4"/>
-        </svg>
+      <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
       </div>
       <span class="font-serif italic text-[#f0ede8]/40 text-[13px]">
         <span class="text-[#FF3E00]">Svelte</span>Skill — built for the community

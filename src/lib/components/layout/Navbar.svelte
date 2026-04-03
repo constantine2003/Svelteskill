@@ -13,10 +13,8 @@
 
   <!-- Logo -->
   <a rel="external" href={user ? '/dashboard' : '/'} class="flex items-center gap-2.5 mr-4">
-    <div class="w-7 h-7 bg-[#FF3E00] rounded-lg flex items-center justify-center flex-shrink-0">
-      <svg viewBox="0 0 98.1 118" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
-        <path fill="white" d="M91.8 15.6C80.9-.1 59.2-4.7 43.6 5.2L16.1 22.8C8.6 27.5 3.4 35.2 1.9 43.9c-1.3 7.3-.2 14.8 3.3 21.3-2.4 3.6-4 7.6-4.7 11.8-1.6 8.9.5 18.1 5.7 25.4 11 15.7 32.7 20.3 48.2 10.4l27.5-17.6c7.5-4.7 12.7-12.4 14.2-21.1 1.3-7.3.2-14.8-3.3-21.3 2.4-3.6 4-7.6 4.7-11.8 1.7-8.9-.4-18.1-5.7-25.4"/>
-      </svg>
+    <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
     </div>
     <span class="text-[#f0ede8] font-serif italic text-lg">SvelteSkill</span>
   </a>
@@ -54,7 +52,7 @@
   <div class="flex items-center gap-3 ml-auto">
     {#if user}
       <!-- Active page indicator + profile -->
-      <a rel="external" href="/dashboard" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <a rel="external" href="/settings" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
         {#if user.avatar_url}
           <img src={user.avatar_url} alt="avatar" class="w-7 h-7 rounded-full" />
         {:else}

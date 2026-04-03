@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Zap, Grid2x2, Lightbulb, Code2, BookOpen, type Icon } from 'lucide-svelte';
+
   const { data } = $props();
 
   const profile = $derived(data.profile);
@@ -19,12 +21,14 @@
     return certificates.find((c: { track_id: number | null }) => c.track_id === trackId);
   }
 
-  const trackIcons: Record<string, string> = {
-    'svelte-fundamentals': '🔥',
-    'sveltekit': '⚡',
-    'svelte-advanced': '🧠',
-    'svelte-typescript': '🔷'
+  const trackIcons: Record<string, { icon: typeof Icon; color: string }> = {
+    'svelte-fundamentals': { icon: Zap,       color: '#FF3E00' },
+    'sveltekit':           { icon: Grid2x2,   color: '#FF3E00' },
+    'svelte-advanced':     { icon: Lightbulb, color: '#FF3E00' },
+    'svelte-typescript':   { icon: Code2,     color: '#FF3E00' },
   };
+
+  const fallbackIcon = { icon: BookOpen, color: '#FF3E00' };
 </script>
 
 <div class="min-h-screen bg-[#1c1c1c]">
@@ -73,6 +77,7 @@
         {@const unlocked = isTrackUnlocked(track)}
         {@const cert = getCert(track.id)}
         {@const attempt = getTrackAttempt(track.id)}
+        {@const { icon: IconComponent, color } = trackIcons[track.slug] ?? fallbackIcon}
 
         <div
           class="bg-[#242424] border rounded-xl p-6 relative overflow-hidden transition-all duration-200"
@@ -88,7 +93,9 @@
           {/if}
 
           <div class="flex items-start justify-between mb-4">
-            <div class="text-2xl">{trackIcons[track.slug] ?? '📘'}</div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-[#FF3E00]/10">
+              <IconComponent size={20} color={color} strokeWidth={1.75} />
+            </div>
             {#if cert}
               <span class="font-mono text-[9px] tracking-widest uppercase px-2 py-1 bg-[#FF3E00]/15 text-[#FF3E00] rounded-full">● Certified</span>
             {:else if !unlocked}

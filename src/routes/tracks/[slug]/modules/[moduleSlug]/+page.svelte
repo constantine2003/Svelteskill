@@ -33,11 +33,24 @@
   const track = $derived(data.track);
   const module = $derived(data.module);
   const allModules = $derived(data.allModules);
-  const completedModuleIds = $derived(data.completedModuleIds);
+
+  // Maintain a local copy of completedModuleIds for immediate UI update
+  const completedModuleIdsFromData = $derived(data.completedModuleIds);
+  let localCompletedIds = $state<number[]>([]);
+
+  $effect(() => {
+    localCompletedIds = [...completedModuleIdsFromData];
+  });
+
+  const completedModuleIds = $derived(localCompletedIds);
   const nextModule = $derived(data.nextModule);
   const partIndex = $derived(data.partIndex);
   const isLastInPart = $derived(data.isLastInPart);
-  const allPartModulesCompleted = $derived(data.allPartModulesCompleted);
+
+  const allPartModulesCompleted = $derived(
+    data.partModules.every(m => completedModuleIds.includes(m.id))
+  );
+  
   const allPartAssessments = $derived(data.allPartAssessments);
   const allPartsPassed = $derived(data.allPartsPassed);
 
@@ -63,6 +76,7 @@
       .from('user_progress')
       .insert({ user_id: data.userId, module_id: module.id });
     if (!error) {
+      localCompletedIds = [...localCompletedIds, module.id]; // update immediately
       completedLocally = true;
       await invalidate('supabase:auth');
     }

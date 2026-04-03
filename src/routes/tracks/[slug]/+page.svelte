@@ -14,16 +14,15 @@
   );
   const totalCount = $derived(modules.length);
 
-  // Progress counts modules + 4 part quizzes + exam = totalCount + 5 steps
-  // Keep it simple: just show module progress, label it clearly
   const percent = $derived(
     totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
   );
 
   const allModulesDone = $derived(completedCount === totalCount && totalCount > 0);
 
-  // Only show "ready to certify" when ALL modules done AND all quizzes passed
-  const readyForExam = $derived(allModulesDone && allPartsPassed && !certificate);
+  // Guard against: passed exam but cert not yet generated (race condition)
+  const examPassed = $derived(attempts.some((a: { passed: boolean }) => a.passed));
+  const readyForExam = $derived(allModulesDone && allPartsPassed && !certificate && !examPassed);
 
   function isCompleted(moduleId: number): boolean {
     return completedModuleIds.includes(moduleId);
@@ -96,9 +95,13 @@
               </svg>
             </div>
             <div class="font-mono text-[9px] text-[#FF3E00] tracking-widest uppercase mb-1">Certified</div>
-            <div class="font-serif italic text-sm text-[#f0ede8]/60">
+            <div class="font-serif italic text-sm text-[#f0ede8]/60 mb-4">
               {new Date((certificate as unknown as { issued_at: string }).issued_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
+            <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
+              class="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#FF3E00] hover:underline transition-colors">
+              View certificate →
+            </a>
           </div>
         {:else}
           <div class="font-mono text-[10px] text-[#f0ede8]/25 uppercase tracking-widest mb-3">Progress</div>
@@ -142,9 +145,23 @@
       </div>
     {/if}
 
-    <!-- Take exam CTA -->
-    <!-- Take exam CTA -->
-    {#if readyForExam}
+    <!-- Certificate banner — shown when cert exists -->
+    {#if certificate}
+      <div class="bg-[#FF3E00]/[0.06] border border-[#FF3E00]/20 rounded-xl p-6 mb-8 flex items-center justify-between gap-6">
+        <div>
+          <div class="font-mono text-[10px] text-[#FF3E00] tracking-widest uppercase mb-1">Certificate earned</div>
+          <p class="text-[#f0ede8]/60 text-sm font-light">
+            You completed this track on {new Date((certificate as unknown as { issued_at: string }).issued_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
+          </p>
+        </div>
+        <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
+          class="flex-shrink-0 inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all">
+          View certificate →
+        </a>
+      </div>
+
+    <!-- Take exam CTA — only when truly ready and haven't passed yet -->
+    {:else if readyForExam}
       <div class="bg-[#FF3E00]/[0.06] border border-[#FF3E00]/20 rounded-xl p-6 mb-8 flex items-center justify-between gap-6">
         <div>
           <div class="font-mono text-[10px] text-[#FF3E00] tracking-widest uppercase mb-1">Ready to certify</div>
@@ -157,7 +174,8 @@
           Take exam →
         </a>
       </div>
-    {:else if allModulesDone && !allPartsPassed && !certificate}
+
+    {:else if allModulesDone && !allPartsPassed}
       <!-- Modules done but quizzes not all passed yet -->
       <div class="bg-white/[0.02] border border-white/8 rounded-xl p-6 mb-8 flex items-center justify-between gap-6">
         <div>
@@ -181,7 +199,8 @@
           {/each}
         </div>
       </div>
-    {:else if !certificate && nextModule}
+
+    {:else if nextModule}
       <div class="mb-8 flex items-center justify-between">
         <p class="text-[#f0ede8]/30 text-sm font-light">
           {completedCount === 0 ? 'Start with the first module below' : 'Continue where you left off'}

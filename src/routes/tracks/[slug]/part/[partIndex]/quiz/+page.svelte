@@ -20,11 +20,12 @@
       allModules: Module[];
       completedModuleIds: (number | null)[];
       allPartsPassed: boolean;
+      allPartAssessments: { part_index: number; passed: boolean }[];
     }
   }
 
   const { data }: Props = $props();
-
+  const allPartAssessments = $derived(data.allPartAssessments);
   const track = $derived(data.track);
   const partIndex = $derived(data.partIndex);
   const partLabel = $derived(data.partLabel);
@@ -130,10 +131,10 @@
   }
 
   // Returns true if quiz for given part is passed — uses existingAssessment for active part
-  function isPartQuizPassed(pi: number): boolean {
-    if (pi === partIndex) return alreadyPassed;
-    return false;
-  }
+  // function isPartQuizPassed(pi: number): boolean {
+  //   if (pi === partIndex) return alreadyPassed;
+  //   return false;
+  // }
 </script>
 
 <div class="bg-[#1a1a1a] flex min-h-screen">
@@ -158,7 +159,7 @@
           {@const doneCount = pModules.filter(m => completedModuleIds.includes(m.id)).length}
           {@const allDone = doneCount === pModules.length}
           {@const isActivePart = pIdx === partIndex}
-          {@const quizPassed = isPartQuizPassed(pIdx)}
+          {@const quizPassed = isActivePart ? alreadyPassed : allPartAssessments.some(pa => pa.part_index === pIdx && pa.passed)}
 
           <!-- Part header -->
           <div class="flex items-center justify-between px-3 pt-4 pb-1.5 {pIdx > 1 ? 'mt-2' : ''}">
@@ -173,7 +174,7 @@
             <span class="font-mono text-[8px] text-[#f0ede8]/20">{doneCount}/{pModules.length}</span>
           </div>
 
-          <!-- Modules -->
+          <!-- Modules in this part -->
           {#each pModules as m (m.id)}
             {@const done = completedModuleIds.includes(m.id)}
             <a rel="external" href="/tracks/{track.slug}/modules/{m.slug}"
@@ -203,31 +204,43 @@
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group
               {isActivePart
                 ? 'bg-[#FF3E00]/10 border border-[#FF3E00]/20'
+                : quizPassed
+                ? 'border border-transparent'
                 : allDone
-                ? 'border border-transparent hover:bg-white/4'
+                ? 'border border-[#FF3E00]/15 bg-[#FF3E00]/5'
                 : 'border border-transparent opacity-40 cursor-not-allowed pointer-events-none'}">
+
             <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center
               {quizPassed ? 'bg-[#FF3E00]/20' : isActivePart ? 'bg-[#FF3E00]/10' : allDone ? 'bg-[#FF3E00]/10' : 'bg-white/4'}">
               {#if quizPassed}
                 <svg class="w-3 h-3 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
-              {:else}
-                <svg class="w-3 h-3 {isActivePart ? 'text-[#FF3E00]' : allDone ? 'text-[#FF3E00]/40' : 'text-[#f0ede8]/20'}"
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              {:else if isActivePart || allDone}
+                <svg class="w-3 h-3 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M9 12h6M12 9v6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              {:else}
+                <svg class="w-3 h-3 text-[#f0ede8]/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
               {/if}
             </div>
-            <span class="text-[12px] font-light
-              {quizPassed ? 'text-[#FF3E00]/60' : isActivePart ? 'text-[#f0ede8]' : allDone ? 'text-[#f0ede8]/35' : 'text-[#f0ede8]/20'}
+
+            <span class="text-[12px] font-light leading-snug
+              {quizPassed ? 'text-[#FF3E00]/60' : isActivePart ? 'text-[#f0ede8]' : allDone ? 'text-[#FF3E00]' : 'text-[#f0ede8]/20'}
               group-hover:text-[#f0ede8]/70 transition-colors">
               Part {pIdx} Quiz
             </span>
+
             {#if isActivePart}
               <span class="ml-auto font-mono text-[8px] text-[#FF3E00]/60 tracking-widest">
                 {quizPassed ? '✓ PASSED' : 'ACTIVE'}
               </span>
+            {:else if quizPassed}
+              <span class="ml-auto font-mono text-[8px] text-[#FF3E00] tracking-widest">✓</span>
+            {:else if allDone}
+              <span class="ml-auto font-mono text-[8px] text-[#FF3E00]/50 tracking-widest">START</span>
             {/if}
           </a>
 
@@ -236,7 +249,8 @@
           {/if}
         {/if}
       {/each}
-       <!-- Final Exam entry -->
+
+      <!-- Final Exam entry -->
       <div class="mx-3 mt-3 border-t border-white/5 mb-3"></div>
       {#if allPartsPassed}
         <a rel="external" href="/tracks/{track.slug}/exam"
