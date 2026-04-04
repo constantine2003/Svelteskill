@@ -5,29 +5,31 @@ export const GET = async ({ url, locals }: RequestEvent) => {
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') ?? '/dashboard';
 
-  if (code) {
-    const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
+  // Guard early — no code means something went wrong with the OAuth flow
+  if (!code) redirect(303, '/auth?error=callback_error');
 
-    if (!error) {
-      const { data: { user } } = await locals.supabase.auth.getUser();
+  // Exchange the OAuth code for a Supabase session
+  const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
 
-      if (user) {
-        const { data: profile } = await locals.supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
+  // If exchange failed (expired code, network issue, etc.), bail out
+  if (error) redirect(303, '/auth?error=callback_error');
 
-        // First time login → onboarding
-        // Returning user → dashboard
-        if (!profile) {
-          redirect(303, '/onboarding');
-        }
-      }
+  // Prefer getSession() over getUser() here — session is already in memory
+  // after exchangeCodeForSession, so this is a free sync call with no extra
+  // round-trip to Supabase Auth servers
+  const { data: { session } } = await locals.supabase.auth.getSession();
 
-      redirect(303, next);
-    }
-  }
+  if (!session?.user) redirect(303, '/auth?error=callback_error');
 
-  redirect(303, '/auth?error=callback_error');
+  // Check if the user has completed onboarding.
+  // Select the bare minimum — just 'id' — we only need to know if a row exists.
+  const { data: profile } = await locals.supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', session.user.id)
+    .single();
+
+  // No profile row → first-time login, send to onboarding
+  // Profile exists → returning user, send to intended destination
+  redirect(303, profile ? next : '/onboarding');
 };
