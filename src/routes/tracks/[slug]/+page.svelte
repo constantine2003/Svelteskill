@@ -1,8 +1,15 @@
 <script lang="ts">
   const { data } = $props();
 
+  type TrackModule = {
+    id: number;
+    order_index: number;
+    slug: string;
+    title: string;
+  };
+
   const track = $derived(data.track);
-  const modules = $derived(data.modules);
+  const modules = $derived((data as typeof data & { modules: TrackModule[] }).modules);
   const completedModuleIds = $derived(data.completedModuleIds);
   const certificate = $derived(data.certificate);
   const attempts = $derived(data.attempts);
