@@ -3,43 +3,41 @@ import type { RequestEvent } from '@sveltejs/kit';
 
 export const load = async ({ locals }: RequestEvent) => {
   const { user } = await locals.safeGetSession();
-
   if (!user) redirect(303, '/auth');
 
-  // Fetch all tracks
-  const { data: tracks } = await locals.supabase
-    .from('tracks')
-    .select('*')
-    .order('order_index');
+  const [tracksRes, certsRes, attemptsRes, modulesRes, progressRes] = await Promise.all([
+    locals.supabase
+      .from('tracks')
+      .select('id, slug, title, description, order_index, prerequisite_track_id')
+      .order('order_index'),
 
-  // Fetch user's certificates to know which tracks are unlocked
-  const { data: certificates } = await locals.supabase
-    .from('certificates')
-    .select('track_id')
-    .eq('user_id', user.id);
+    locals.supabase
+      .from('certificates')
+      .select('id, track_id, issued_at, full_name_on_cert') // ← fixed
+      .eq('user_id', user!.id)
+      .order('issued_at', { ascending: false }),
 
-  // Fetch exam attempts
-  const { data: attempts } = await locals.supabase
-    .from('exam_attempts')
-    .select('track_id, passed, score')
-    .eq('user_id', user.id);
+    locals.supabase
+      .from('exam_attempts')
+      .select('track_id, passed, score, taken_at')
+      .eq('user_id', user!.id),
 
-  // Fetch module counts per track
-  const { data: modules } = await locals.supabase
-    .from('modules')
-    .select('track_id');
+    locals.supabase
+      .from('modules')
+      .select('id, track_id, order_index')
+      .order('order_index'),
 
-  // Fetch user progress
-  const { data: progress } = await locals.supabase
-    .from('user_progress')
-    .select('module_id, modules(track_id)')
-    .eq('user_id', user.id);
+    locals.supabase
+      .from('user_progress')
+      .select('module_id, completed_at, modules(track_id)')
+      .eq('user_id', user!.id),
+  ]);
 
   return {
-    tracks: tracks ?? [],
-    certificates: certificates ?? [],
-    attempts: attempts ?? [],
-    modules: modules ?? [],
-    progress: progress ?? []
+    tracks: tracksRes.data ?? [],
+    certificates: certsRes.data ?? [],
+    attempts: attemptsRes.data ?? [],
+    modules: modulesRes.data ?? [],
+    progress: progressRes.data ?? [],
   };
 };

@@ -1,46 +1,85 @@
 <script lang="ts">
   const { data } = $props();
 
+  // Define the cert type once — reuse everywhere
+  type Cert = {
+    id: string;
+    track_id: number | null;
+    issued_at: string | null;
+    full_name_on_cert: string;
+  };
+
+  type Attempt = {
+    track_id: number | null;
+    passed: boolean;
+    score: number;
+    taken_at: string | null;
+  };
+
+  type Module = {
+    id: number;
+    track_id: number | null;
+    order_index: number;
+  };
+
+  type Progress = {
+    module_id: number | null;
+    completed_at: string | null;
+    modules: { track_id: number | null } | null;
+  };
+
   const tracks = $derived(data.tracks);
-  const certificates = $derived(data.certificates);
-  const attempts = $derived(data.attempts);
-  const modules = $derived(data.modules);
-  const progress = $derived(data.progress);
+  const certificates = $derived(data.certificates as Cert[]);
+  $inspect(data.certificates);
+  const attempts = $derived(data.attempts as Attempt[]);
+  const modules = $derived(data.modules as Module[]);
+  const progress = $derived(data.progress as Progress[]);
 
   function isUnlocked(track: { id: number; prerequisite_track_id: number | null }): boolean {
     if (!track.prerequisite_track_id) return true;
-    return certificates.some((c: { track_id: number | null }) => c.track_id === track.prerequisite_track_id);
+    return certificates.some(c => c.track_id === track.prerequisite_track_id);
   }
 
-  function getCert(trackId: number) {
-    return certificates.find((c: { track_id: number | null }) => c.track_id === trackId);
+  // Now TypeScript knows the full shape — no cast needed inside the function
+  function getCert(trackId: number): Cert | undefined {
+    return certificates.find(c => c.track_id === trackId);
   }
 
-  function getAttempts(trackId: number) {
-    return attempts.filter((a: { track_id: number | null }) => a.track_id === trackId);
+  function getAttempts(trackId: number): Attempt[] {
+    return attempts.filter(a => a.track_id === trackId);
   }
 
-  function getModuleCount(trackId: number) {
-    return modules.filter((m: { track_id: number | null }) => m.track_id === trackId).length;
+  function getModuleCount(trackId: number): number {
+    return modules.filter(m => m.track_id === trackId).length;
   }
 
-  function getCompletedCount(trackId: number) {
-    return progress.filter((p: { module_id: number | null; modules: { track_id: number | null } | null }) =>
-      p.modules?.track_id === trackId
-    ).length;
+  function getCompletedCount(trackId: number): number {
+    return progress.filter(p => p.modules?.track_id === trackId).length;
   }
 
-  function getProgressPercent(trackId: number) {
+  function getProgressPercent(trackId: number): number {
     const total = getModuleCount(trackId);
     if (total === 0) return 0;
     return Math.round((getCompletedCount(trackId) / total) * 100);
   }
 
+  function formatDate(dateStr: string | null): string {
+    if (!dateStr) return 'Recently issued';
+    // Take only the date part (YYYY-MM-DD) and append T00:00:00
+    // to avoid timezone shifting the day when formatting
+    const date = new Date(dateStr.split('T')[0] + 'T00:00:00');
+    return `Issued ${date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })}`;
+  }
+
   const trackMeta: Record<string, { icon: string; color: string }> = {
-    'svelte-fundamentals': { icon: 'bolt', color: '#FF3E00' },
-    'sveltekit':           { icon: 'grid', color: '#FF3E00' },
-    'svelte-advanced':     { icon: 'bulb', color: '#FF3E00' },
-    'svelte-typescript':   { icon: 'code', color: '#FF3E00' }
+    'svelte-fundamentals': { icon: 'bolt',  color: '#FF3E00' },
+    'sveltekit':           { icon: 'grid',  color: '#FF3E00' },
+    'svelte-advanced':     { icon: 'bulb',  color: '#FF3E00' },
+    'svelte-typescript':   { icon: 'code',  color: '#FF3E00' }
   };
 </script>
 
@@ -140,7 +179,7 @@
                 {/if}
                 {#if cert}
                   <span class="font-mono text-[10px] text-[#FF3E00]/60">
-                    Issued {new Date((cert as unknown as { issued_at: string }).issued_at ?? '').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {formatDate(cert.issued_at)}
                   </span>
                 {/if}
               </div>

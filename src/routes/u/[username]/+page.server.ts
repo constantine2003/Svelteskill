@@ -8,7 +8,6 @@ export const load = async ({ locals, params }: RequestEvent) => {
     .from('profiles')
     .select('id, display_name, full_name, avatar_url, created_at')
     .eq('username', params?.username ?? '')
-
     .single();
 
   if (!profile) throw error(404, 'User not found');

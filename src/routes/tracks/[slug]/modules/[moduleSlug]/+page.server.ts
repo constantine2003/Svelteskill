@@ -1,13 +1,13 @@
 import { redirect, error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 
+// Maps part number to the order_index of its last module.
+// Update this if you add more modules to a part.
 const PART_LAST_MODULE: Record<number, number> = {
-  1: 3,
-  2: 6,
-  3: 9,
-  4: 12
+  1: 3, 2: 6, 3: 9, 4: 12
 };
 
+// Derives which part (1–4) a module belongs to based on its order_index.
 function getPartIndex(orderIndex: number): number {
   if (orderIndex <= 3) return 1;
   if (orderIndex <= 6) return 2;
@@ -15,197 +15,77 @@ function getPartIndex(orderIndex: number): number {
   return 4;
 }
 
-type ModuleRow = {
-  id: number;
-  title: string;
-  slug: string;
-  order_index: number;
-};
+type PartAssessmentSimple = { part_index: number; passed: boolean };
 
-type PartAssessmentRow = {
-  id: number;
-  user_id: string;
-  track_id: number;
-  part_index: number;
-  passed: boolean;
-  created_at: string | null;
-};
+// Temporary cast until `part_assessments` is added to generated types.
+// Remove after: npx supabase gen types typescript --project-id <id> > src/lib/database.types.ts
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UntypedSupabase = { from: (table: string) => any };
 
-type PartAssessmentSimple = {
-  part_index: number;
-  passed: boolean;
-};
-
-type QuestionRow = {
-  id: number;
-  track_id: number | null;
-  question: string;
-  options: string[];
-  correct_index: number;
-  explanation: string | null;
-  is_final_exam: boolean;
-  module_id: number | null;
-};
-
-type PartAssessmentQueryBuilder = {
-  from: (table: 'part_assessments') => {
-    select: (cols: string) => {
-      eq: (col: string, val: unknown) => {
-        eq: (col: string, val: unknown) => {
-          eq: (col: string, val: unknown) => {
-            maybeSingle: () => Promise<{ data: PartAssessmentRow | null; error: unknown }>;
-          };
-          then: never;
-        } & Promise<{ data: PartAssessmentSimple[] | null; error: unknown }>;
-      };
-    };
-  };
-};
-
-export const load = async ({ locals, params }: RequestEvent) => {
-  console.log('[module load] params:', params);
-
+export const load = async ({ locals, params, parent }: RequestEvent & {
+  parent: () => Promise<{
+    track: { id: number; slug: string; title: string; prerequisite_track_id: number | null };
+    allModules: { id: number; slug: string; title: string; order_index: number; content: string }[];
+    allQuestions: { id: number; question: string; options: string[]; correct_index: number; explanation: string | null; part_index?: number }[];
+    completedModuleIds: (number | null)[];
+    allPartAssessments: PartAssessmentSimple[];
+    allPartsPassed: boolean;
+  }>
+}) => {
   const { user } = await locals.safeGetSession();
-  console.log('[module load] user:', user?.id ?? 'null');
-
   if (!user) throw redirect(303, '/auth');
 
-  const { data: track, error: trackError } = await locals.supabase
-    .from('tracks')
-    .select('*')
-    .eq('slug', params?.slug ?? '')
-    .single();
+  // Pull static curriculum data from the layout loader.
+  // The layout fetches all modules (with content) and questions once when
+  // the user enters the track — no DB calls needed here for that data.
+  const { track, allModules, allQuestions, completedModuleIds, allPartAssessments, allPartsPassed } = await parent();
 
-  console.log('[module load] track:', track?.id ?? 'null', '| error:', trackError?.message ?? 'none');
-  if (!track) throw error(404, 'Track not found');
-
-  if (track.prerequisite_track_id) {
-    const { data: prereqCert } = await locals.supabase
-      .from('certificates')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('track_id', track.prerequisite_track_id)
-      .single();
-    if (!prereqCert) throw redirect(303, '/tracks');
-  }
-
-  const { data: module, error: moduleError } = await locals.supabase
-    .from('modules')
-    .select('*')
-    .eq('slug', params?.moduleSlug ?? '')
-    .eq('track_id', track.id)
-    .single();
-
-  console.log('[module load] module:', module?.id ?? 'null', '| error:', moduleError?.message ?? 'none');
+  // Resolve the current module from the cached list — zero DB calls.
+  const module = allModules.find(m => m.slug === params?.moduleSlug);
   if (!module) throw error(404, 'Module not found');
 
-  const { data: allModulesRaw, error: allModulesError } = await locals.supabase
-    .from('modules')
-    .select('id, title, slug, order_index')
-    .eq('track_id', track.id)
-    .order('order_index');
-
-  const allModules = (allModulesRaw ?? []) as ModuleRow[];
-  console.log('[module load] allModules count:', allModules.length, '| error:', allModulesError?.message ?? 'none');
-
-  const { data: progress, error: progressError } = await locals.supabase
-    .from('user_progress')
-    .select('module_id')
-    .eq('user_id', user.id);
-
-  console.log('[module load] progress count:', progress?.length ?? 0, '| error:', progressError?.message ?? 'none');
-
-  const completedModuleIds = (progress ?? []).map(
-    (p: { module_id: number | null }) => p.module_id
-  );
-
-  const isCompleted = completedModuleIds.includes(module.id);
   const partIndex = getPartIndex(module.order_index);
   const isLastInPart = module.order_index === PART_LAST_MODULE[partIndex];
+  const completedSet = new Set(completedModuleIds);
 
-  const partModules = allModules.filter(
-    (m) => getPartIndex(m.order_index) === partIndex
-  );
-
-  const allPartModulesCompleted = partModules.every(
-    (m) => completedModuleIds.includes(m.id)
-  );
-
-  console.log('[module load] partIndex:', partIndex, '| isLastInPart:', isLastInPart, '| allPartModulesCompleted:', allPartModulesCompleted);
-
-  const db = locals.supabase as unknown as PartAssessmentQueryBuilder;
-
-  // Use maybeSingle so no error is thrown when no row exists yet
-  const { data: partAssessmentRaw } = await db
+  // Only fetch the current part assessment — user-specific, always fresh.
+  // progress, allPartAssessments, and allPartsPassed come from the layout.
+  const db = locals.supabase as unknown as UntypedSupabase;
+  const partAssessmentRes = await db
     .from('part_assessments')
-    .select('*')
+    .select('passed, score, part_index')
     .eq('user_id', user.id)
     .eq('track_id', track.id)
     .eq('part_index', partIndex)
     .maybeSingle();
 
-  const partAssessment = (partAssessmentRaw ?? null) as PartAssessmentRow | null;
-  console.log('[module load] partAssessment:', partAssessment?.passed ?? 'none');
+  const partAssessment = (partAssessmentRes.data ?? null) as { passed: boolean; score: number } | null;
 
-  const { data: allPartAssessmentsRaw } = await (
-    locals.supabase as unknown as {
-      from: (t: string) => {
-        select: (c: string) => {
-          eq: (k: string, v: unknown) => {
-            eq: (k: string, v: unknown) => Promise<{
-              data: PartAssessmentSimple[] | null;
-            }>;
-          };
-        };
-      };
-    }
-  )
-    .from('part_assessments')
-    .select('part_index, passed')
-    .eq('user_id', user.id)
-    .eq('track_id', track.id);
+  // Modules that belong to the current part — used for quiz unlock logic.
+  const partModules = allModules.filter(m => getPartIndex(m.order_index) === partIndex);
 
-  const allPartAssessments = (allPartAssessmentsRaw ?? []) as PartAssessmentSimple[];
-
-  const allPartsPassed = [1, 2, 3, 4].every(pi =>
-    allPartAssessments.some(pa => pa.part_index === pi && pa.passed)
-  );
-
-  let partQuestions: QuestionRow[] = [];
-  if (isLastInPart) {
-    const { data: qs, error: qsError } = await locals.supabase
-      .from('questions')
-      .select('*')
-      .eq('track_id', track.id)
-      .eq('is_final_exam', false);
-
-    partQuestions = ((qs ?? []) as QuestionRow[]).filter(
-      // @ts-expect-error — part_index not yet in generated types
-      (q) => q.part_index === partIndex
-    );
-    console.log('[module load] partQuestions count:', partQuestions.length, '| error:', qsError?.message ?? 'none');
-  }
-
-  const nextModule = allModules.find(
-    (m) => m.order_index === module.order_index + 1
-  );
-
-  console.log('[module load] isCompleted:', isCompleted, '| nextModule:', nextModule?.slug ?? 'none');
+  // Questions for the current part — only relevant on the last module of a part.
+  const partQuestions = isLastInPart
+    ? allQuestions.filter(q => q.part_index === partIndex)
+    : [];
 
   return {
-    track,
     module,
     allModules,
+    // Pass through from layout — already fetched, no extra DB call
     completedModuleIds,
-    isCompleted,
-    nextModule: nextModule ?? null,
+    isCompleted: completedSet.has(module.id),
+    // Next module in sequence — null if this is the last module in the track.
+    nextModule: allModules.find(m => m.order_index === module.order_index + 1) ?? null,
     userId: user.id,
     partIndex,
     isLastInPart,
-    allPartModulesCompleted,
+    // True only when every module in the current part is completed.
+    allPartModulesCompleted: partModules.every(m => completedSet.has(m.id)),
     partAssessment,
     partQuestions,
     partModules,
+    // Pass through from layout
     allPartAssessments,
     allPartsPassed,
   };

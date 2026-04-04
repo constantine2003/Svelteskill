@@ -7,6 +7,12 @@
   interface Question { id: number; question: string; options: string[] | string; correct_index: number; explanation: string | null; part_index: number }
   interface Assessment { passed: boolean; score: number }
 
+  // Shuffled question shape — correct_index is remapped after shuffle
+  interface ShuffledQuestion extends Omit<Question, 'correct_index'> {
+    options: string[];
+    correct_index: number;
+  }
+
   interface Props {
     data: {
       track: Track;
@@ -29,12 +35,37 @@
   const track = $derived(data.track);
   const partIndex = $derived(data.partIndex);
   const partLabel = $derived(data.partLabel);
-  const questions = $derived(data.questions);
   const nextPartFirstModule = $derived(data.nextPartFirstModule);
   const isLastPart = $derived(data.isLastPart);
   const allModules = $derived(data.allModules);
   const completedModuleIds = $derived(data.completedModuleIds);
   const allPartsPassed = $derived(data.allPartsPassed);
+
+  // Fisher-Yates shuffle — randomizes array in place, returns new array
+  function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // Shuffle options once on load — correct_index is remapped to follow the answer
+  // so grading still works correctly after shuffling
+  const questions = $derived<ShuffledQuestion[]>(
+    data.questions.map(q => {
+      const options = (Array.isArray(q.options)
+        ? q.options
+        : JSON.parse(q.options as string)) as string[];
+
+      const correctAnswer = options[q.correct_index];
+      const shuffledOptions = shuffle(options);
+      const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+
+      return { ...q, options: shuffledOptions, correct_index: newCorrectIndex };
+    })
+  );
 
   let alreadyPassed = $state(false);
   let alreadyScore = $state<number | null>(null);
@@ -64,7 +95,7 @@
 
   const allAnswered = $derived(
     questions.length > 0 &&
-    questions.every((q: Question) => isAnswered(q.id))
+    questions.every((q: ShuffledQuestion) => isAnswered(q.id))
   );
 
   async function submitQuiz() {
@@ -73,40 +104,41 @@
 
     let correct = 0;
     for (const q of questions) {
-        if (selectedAnswers[q.id] === q.correct_index) correct++;
+      // Grading uses the remapped correct_index — works correctly after shuffle
+      if (selectedAnswers[q.id] === q.correct_index) correct++;
     }
 
-    correctCount = correct;   
+    correctCount = correct;
     score = Math.round((correct / questions.length) * 100);
     passed = score >= 80;
     submitted = true;
     submitting = false;
 
     const { data: upsertData, error: upsertError } = await (supabase as unknown as {
-        from: (t: string) => {
+      from: (t: string) => {
         upsert: (v: unknown, o: unknown) => Promise<{ data: unknown; error: unknown }>;
-        };
+      };
     })
-        .from('part_assessments')
-        .upsert(
+      .from('part_assessments')
+      .upsert(
         {
-            user_id: data.userId,
-            track_id: track.id,
-            part_index: partIndex,
-            score,
-            passed
+          user_id: data.userId,
+          track_id: track.id,
+          part_index: partIndex,
+          score,
+          passed
         },
         { onConflict: 'user_id,track_id,part_index' }
-        );
+      );
 
     console.log('[quiz] upsert result:', upsertData, '| error:', upsertError);
 
     if (passed) {
-        alreadyPassed = true;
-        alreadyScore = score;
-        await invalidate('supabase:auth');
+      alreadyPassed = true;
+      alreadyScore = score;
+      await invalidate('supabase:auth');
     }
- }
+  }
 
   function retryQuiz() {
     selectedAnswers = {};
@@ -114,6 +146,9 @@
     score = 0;
     passed = false;
     correctCount = 0;
+    // Note: options stay shuffled on retry — reshuffle would require
+    // re-deriving questions which $derived handles automatically if
+    // you want fresh shuffles, move shuffle logic into retryQuiz instead
   }
 
   const partLabels: Record<number, string> = {
@@ -129,12 +164,6 @@
     if (orderIndex <= 9) return 3;
     return 4;
   }
-
-  // Returns true if quiz for given part is passed — uses existingAssessment for active part
-  // function isPartQuizPassed(pi: number): boolean {
-  //   if (pi === partIndex) return alreadyPassed;
-  //   return false;
-  // }
 </script>
 
 <div class="bg-[#1a1a1a] flex min-h-screen">
