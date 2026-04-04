@@ -284,38 +284,142 @@
     </div>
   </section>
 
-  <!-- CERT PREVIEW -->
+  <!-- CERT DESIGN -->
   <section class="py-16 md:py-24 px-5 md:px-10 bg-[#141414] border-t border-white/8" id="cert">
     <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
 
-      <!-- Mock cert -->
-      <div class="border border-white/8 rounded-xl overflow-hidden bg-[#141414]">
-        <div class="h-[2px] bg-gradient-to-r from-[#FF3E00] to-[#FF3E00]/10"></div>
-        <div class="p-7 md:p-10">
-          <div class="flex items-center justify-between mb-8 md:mb-10">
+      <!-- Mock cert — landscape bond paper, portrait style content -->
+      <div class="relative bg-[#faf7f2] border border-[#c9a84c]" style="aspect-ratio: 1.414 / 1;">
+
+        <!-- Corner ornaments -->
+        {#each [
+          'top-1.5 left-1.5',
+          'top-1.5 right-1.5 -scale-x-100',
+          'bottom-1.5 left-1.5 -scale-y-100',
+          'bottom-1.5 right-1.5 scale-[-1]'
+        ] as pos (pos)}
+          <svg class="absolute {pos} w-6 h-6 opacity-60" viewBox="0 0 40 40" fill="none">
+            <path d="M2 2 L12 2 M2 2 L2 12" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M14 2 Q20 8 14 14 Q8 20 2 14" stroke="#c9a84c" stroke-width="0.75" fill="none"/>
+            <circle cx="7" cy="7" r="2" fill="#c9a84c"/>
+          </svg>
+        {/each}
+
+        <!-- Inner border -->
+        <div class="absolute inset-2.5 border border-[#c9a84c]/50 flex flex-col px-10 py-5">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <!-- Logo: white bg instead of black -->
+              <div class="w-6 h-6 bg-white border border-[#c9a84c]/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
               </div>
-              <span class="font-serif italic text-[13px] text-[#f0ede8]">SvelteSkill</span>
+              <span class="font-mono text-[11px] tracking-widest text-[#1a1a1a]">SvelteSkill</span>
             </div>
-            <span class="font-mono text-[9px] text-[#f0ede8]/30">March 22, 2026</span>
+            <span class="font-mono text-[8px] text-[#1a1a1a]/35 tracking-wide">March 22, 2026</span>
           </div>
-          <div class="font-mono text-[9px] text-[#FF3E00] tracking-[2px] uppercase mb-1.5">Certificate of Completion</div>
-          <div class="font-serif italic text-[24px] text-[#f0ede8] mb-1">This certifies that</div>
-          <div class="font-mono text-[9px] text-[#f0ede8]/30 mb-1">awarded to</div>
-          <div class="font-serif italic text-[19px] text-[#f0ede8] mb-1.5">Daniel Montesclaros</div>
-          <div class="text-[12px] font-light text-[#f0ede8]/40 mb-8">
-            has completed <span class="text-[#FF3E00]">Svelte Fundamentals</span>
+
+          <!-- Top divider -->
+          <div class="h-px bg-[#c9a84c]/35 mb-3"></div>
+
+          <!-- Seal — gold instead of black -->
+          <div class="flex justify-center mb-2">
+            <div class="relative w-10 h-10 rounded-full bg-[#faf7f2] border-2 border-[#c9a84c] flex items-center justify-center">
+              <div class="absolute inset-[2px] rounded-full border border-dashed border-[#c9a84c]/60"></div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c"/>
+              </svg>
+            </div>
           </div>
-          <div class="border-t border-white/8 pt-4 flex items-center justify-between">
-            <span class="font-mono text-[9px] text-[#f0ede8]/20">SVSK·2026·A3F9B2C1</span>
-            <button class="font-mono text-[9px] text-[#FF3E00] bg-[#FF3E00]/10 border-none px-2.5 py-1.5 rounded cursor-pointer">verify →</button>
+
+          <!-- Cert type -->
+          <div class="text-center font-mono text-[7px] tracking-[3px] uppercase text-[#c9a84c] mb-1.5">
+            Certificate of Completion
           </div>
+
+          <!-- Headline -->
+          <div class="text-center font-serif italic text-[20px] text-[#1a1a1a] leading-tight mb-1">
+            This is to certify that
+          </div>
+          <div class="text-center font-mono text-[7px] tracking-[2px] uppercase text-[#1a1a1a]/25 mb-2">
+            Awarded to
+          </div>
+
+          <!-- Name with diamond dividers -->
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
+            <div class="w-1 h-1 rotate-45 bg-[#c9a84c]/50"></div>
+            <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
+          </div>
+          <div class="text-center font-serif italic text-[17px] text-[#1a1a1a] py-1.5">
+            Daniel Montesclaros
+          </div>
+          <div class="flex items-center gap-3 mb-2.5">
+            <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
+            <div class="w-1 h-1 rotate-45 bg-[#c9a84c]/50"></div>
+            <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
+          </div>
+
+          <!-- Body text -->
+          <p class="text-center text-[9px] text-[#1a1a1a]/45 leading-relaxed mb-3 max-w-sm mx-auto">
+            has successfully completed all required coursework and demonstrated proficiency in
+            <strong class="text-[#1a1a1a]/70 font-semibold">Svelte Fundamentals</strong>,
+            encompassing reactive programming principles, component architecture,
+            and modern frontend development practices in the
+            <em class="text-[#b08030]">Svelte framework</em>.
+          </p>
+
+          <!-- Signature row -->
+          <div class="flex items-end justify-between gap-4 mt-auto mb-2">
+
+            <!-- Left sig — with your SVG signature -->
+            <div class="flex-1 text-center">
+              <img
+                src="/signature.svg"
+                alt="Signature"
+                class="h-7 w-auto mx-auto mb-1"
+                style="filter: brightness(0) opacity(0.55);"
+              />
+              <div class="h-px bg-[#c9a84c]/40 mb-1"></div>
+              <div class="font-mono text-[6.5px] text-[#1a1a1a]/35 uppercase tracking-wide leading-relaxed">
+                Daniel Montesclaros<br/>Lead Developer · Founder
+              </div>
+            </div>
+
+            <!-- Official seal — gold ring, no black -->
+            <div class="flex-shrink-0 w-12 h-12 rounded-full border border-[#c9a84c] bg-[#faf7f2] flex flex-col items-center justify-center mb-1" style="box-shadow: 0 0 0 2px #faf7f2, 0 0 0 3px #c9a84c40;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" class="mb-0.5">
+                <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c" opacity="0.7"/>
+              </svg>
+              <span class="font-mono text-[5px] text-[#c9a84c]/60 tracking-widest uppercase text-center leading-tight">
+                Official<br/>Seal
+              </span>
+            </div>
+
+            <!-- Right — SvelteSkill platform -->
+            <div class="flex-1 text-center">
+              <div class="h-7 flex items-end justify-center mb-1">
+                <span class="font-serif italic text-[15px] text-[#c9a84c]/70">SvelteSkill</span>
+              </div>
+              <div class="h-px bg-[#c9a84c]/40 mb-1"></div>
+              <div class="font-mono text-[6.5px] text-[#1a1a1a]/35 uppercase tracking-wide leading-relaxed">
+                SvelteSkill<br/>Platform Certification
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <div class="h-px bg-[#c9a84c]/20 mb-1.5"></div>
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[6.5px] text-[#1a1a1a]/20 tracking-widest">SVSK · 2026 · A3F9B2C1</span>
+          </div>
+
         </div>
       </div>
 
-      <!-- Text -->
+      <!-- Text — untouched -->
       <div>
         <div class="flex items-center gap-2.5 mb-4">
           <div class="w-4 h-px bg-[#FF3E00]"></div>
@@ -345,48 +449,6 @@
         </ul>
       </div>
 
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="py-24 md:py-32 px-5 md:px-10 text-center border-t border-white/8 relative overflow-hidden">
-    <div class="absolute inset-0 pointer-events-none"
-      style="background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,62,0,0.07) 0%, transparent 65%)">
-    </div>
-    <div class="relative z-10 max-w-[500px] mx-auto">
-      <div class="flex items-center justify-center gap-2.5 mb-6">
-        <div class="w-4 h-px bg-[#FF3E00]/60"></div>
-        <span class="font-mono text-[10px] text-[#FF3E00]/70 tracking-[2px] uppercase">Ready?</span>
-        <div class="w-4 h-px bg-[#FF3E00]/60"></div>
-      </div>
-      <h2 class="font-serif italic text-[clamp(40px,6vw,64px)] font-normal tracking-[-2px] leading-[1.05] text-[#f0ede8] mb-4">
-        Start with<br><span class="text-[#FF3E00]">Fundamentals</span>
-      </h2>
-      <p class="text-[#f0ede8]/40 text-[14px] font-light leading-relaxed mb-10">
-        Free forever. No paywall. Sign in with GitHub or Google and begin your first module right now.
-      </p>
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 flex-wrap">
-        <a rel="external" href="/auth"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-[14px] px-5 py-2.5 rounded-lg transition-all">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-          Continue with GitHub
-        </a>
-        <a rel="external" href="/auth"
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent hover:bg-white/5 text-[#f0ede8]/55 font-medium text-[14px] px-5 py-2.5 rounded-lg border border-white/10 hover:border-white/20 transition-all">
-          <svg class="w-4 h-4" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Continue with Google
-        </a>
-      </div>
-      <p class="font-mono text-[10px] text-[#f0ede8]/20 mt-5 tracking-wide">
-        no credit card · no company · just svelte
-      </p>
     </div>
   </section>
 
