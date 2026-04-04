@@ -38,7 +38,7 @@
     <div class="text-center mb-10">
       <a href="/" rel="external" class="inline-flex items-center gap-2 mb-6">
         <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-          <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
+          <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
         </div>
         <span class="font-serif italic text-[#f0ede8] text-xl">SvelteSkill</span>
       </a>

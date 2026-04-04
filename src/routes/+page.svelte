@@ -295,7 +295,7 @@
           <div class="flex items-center justify-between mb-8 md:mb-10">
             <div class="flex items-center gap-2">
               <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
+                <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
               </div>
               <span class="font-serif italic text-[13px] text-[#f0ede8]">SvelteSkill</span>
             </div>
@@ -394,7 +394,7 @@
   <footer class="border-t border-white/8 px-5 md:px-10 py-6 md:py-7 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#141414]">
     <div class="flex items-center gap-2">
       <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-        <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
+        <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
       </div>
       <span class="font-serif italic text-[#f0ede8]/40 text-[13px]">
         <span class="text-[#FF3E00]">Svelte</span>Skill — built for the community

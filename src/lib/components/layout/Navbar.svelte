@@ -14,7 +14,7 @@
   <!-- Logo -->
   <a rel="external" href={user ? '/dashboard' : '/'} class="flex items-center gap-2.5 mr-4">
     <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-      <img src="/src/lib/assets/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
+      <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
     </div>
     <span class="text-[#f0ede8] font-serif italic text-lg">SvelteSkill</span>
   </a>
