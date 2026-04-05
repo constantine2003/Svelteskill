@@ -38,11 +38,15 @@
   );
 </script>
 
+<svelte:head>
+  <title>Certificate - {track.title} | SvelteSkill</title>
+</svelte:head>
+
 <div class="min-h-screen bg-[#1a1a1a]">
-  <main class="max-w-[760px] mx-auto px-8 py-20">
+  <main class="max-w-[640px] mx-auto px-8 py-20">
 
     <!-- Header -->
-    <div class="text-center mb-16">
+    <div class="text-center mb-12">
       <div class="flex items-center justify-center gap-2.5 mb-6">
         <div class="w-8 h-px bg-[#FF3E00]"></div>
         <span class="font-mono text-[10px] text-[#FF3E00] tracking-[2px] uppercase">Congratulations</span>
@@ -56,52 +60,73 @@
       </p>
     </div>
 
-    <!-- Certificate card -->
-    <div class="border border-[#FF3E00]/25 rounded-2xl overflow-hidden bg-[#1c1c1c] mb-10 shadow-[0_0_60px_rgba(255,62,0,0.08)]">
-      <div class="h-[3px] bg-gradient-to-r from-[#FF3E00] to-[#FF3E00]/10"></div>
-      <div class="p-12">
+    <!-- Certificate summary card (replaces the rendered cert) -->
+    <div class="bg-[#1c1c1c] border border-[#c9a84c]/30 rounded-2xl overflow-hidden mb-6 shadow-[0_0_40px_rgba(201,168,76,0.06)]">
+      <div class="h-[2px] bg-gradient-to-r from-[#c9a84c] to-[#c9a84c]/10"></div>
+      <div class="p-8">
 
-        <div class="flex items-center justify-between mb-14">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 bg-[#FF3E00] rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 98.1 118" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
-                <path fill="white" d="M91.8 15.6C80.9-.1 59.2-4.7 43.6 5.2L16.1 22.8C8.6 27.5 3.4 35.2 1.9 43.9c-1.3 7.3-.2 14.8 3.3 21.3-2.4 3.6-4 7.6-4.7 11.8-1.6 8.9.5 18.1 5.7 25.4 11 15.7 32.7 20.3 48.2 10.4l27.5-17.6c7.5-4.7 12.7-12.4 14.2-21.1 1.3-7.3.2-14.8-3.3-21.3 2.4-3.6 4-7.6 4.7-11.8 1.7-8.9-.4-18.1-5.7-25.4"/>
-              </svg>
-            </div>
-            <span class="font-serif italic text-lg text-[#f0ede8]">SvelteSkill</span>
-          </div>
-          <span class="font-mono text-[10px] text-[#f0ede8]/25">{formattedDate}</span>
-        </div>
-
-        <div class="mb-14">
-          <div class="font-mono text-[10px] text-[#FF3E00] tracking-[2px] uppercase mb-3">
-            Certificate of Completion
-          </div>
-          <div class="font-serif italic text-[28px] text-[#f0ede8] mb-2 leading-tight">
-            This certifies that
-          </div>
-          <div class="font-mono text-[10px] text-[#f0ede8]/30 mb-2">awarded to</div>
-          <div class="font-serif italic text-[32px] text-[#f0ede8] mb-4 tracking-[-0.5px]">
-            {certName}
-          </div>
-          <div class="text-[#f0ede8]/40 text-sm font-light">
-            has successfully completed
-            <span class="text-[#FF3E00]"> {track.title}</span>
-            <br />with a final exam score of
-            <span class="text-[#f0ede8]"> {score}%</span>
-          </div>
-        </div>
-
-        <div class="border-t border-white/8 pt-6 flex items-center justify-between">
+        <!-- Cert meta -->
+        <div class="flex items-start justify-between mb-6">
           <div>
-            <div class="font-mono text-[9px] text-[#f0ede8]/20 mb-0.5">Certificate ID</div>
-            <div class="font-mono text-[11px] text-[#f0ede8]/40">SVSK·{certId}</div>
+            <div class="font-mono text-[9px] text-[#c9a84c] tracking-[2px] uppercase mb-2">Certificate of Completion</div>
+            <div class="font-serif italic text-2xl text-[#f0ede8] mb-1">{certName}</div>
+            <div class="text-[#f0ede8]/35 text-sm font-light">{track.title}</div>
           </div>
-          <a rel="external" href="/verify/{certificate?.id}"
-            class="font-mono text-[10px] text-[#FF3E00] bg-[#FF3E00]/10 hover:bg-[#FF3E00]/20 px-3 py-2 rounded-lg transition-colors">
-            Verify →
-          </a>
+          <div class="text-right">
+            <div class="font-mono text-[9px] text-[#f0ede8]/25 uppercase tracking-widest mb-1">Score</div>
+            <div class="font-serif italic text-3xl text-[#c9a84c]">{score}%</div>
+          </div>
         </div>
+
+        <!-- Divider -->
+        <div class="h-px bg-[#c9a84c]/15 mb-6"></div>
+
+        <!-- Details grid -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div>
+            <div class="font-mono text-[9px] text-[#f0ede8]/25 uppercase tracking-widest mb-1">Issued</div>
+            <div class="text-[#f0ede8]/60 text-xs font-light">{formattedDate}</div>
+          </div>
+          <div>
+            <div class="font-mono text-[9px] text-[#f0ede8]/25 uppercase tracking-widest mb-1">Certificate ID</div>
+            <div class="font-mono text-[#f0ede8]/60 text-xs">SVSK·{certId}</div>
+          </div>
+          <div>
+            <div class="font-mono text-[9px] text-[#f0ede8]/25 uppercase tracking-widest mb-1">Status</div>
+            <div class="flex items-center gap-1.5">
+              <div class="w-1.5 h-1.5 rounded-full bg-[#FF3E00] animate-pulse"></div>
+              <span class="font-mono text-[10px] text-[#FF3E00]">Verified</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Track description -->
+        <div class="bg-[#c9a84c]/[0.05] border border-[#c9a84c]/15 rounded-xl p-4 mb-6">
+          <p class="text-[#f0ede8]/40 text-sm font-light leading-relaxed">
+            {#if track.slug === 'svelte-fundamentals'}
+              Demonstrated proficiency in core Svelte concepts, reactive programming principles, and component-driven UI development.
+            {:else if track.slug === 'sveltekit'}
+              Demonstrated proficiency in file-based routing, server-side rendering, and building full-stack applications with SvelteKit.
+            {:else if track.slug === 'svelte-advanced'}
+              Demonstrated proficiency in advanced Svelte patterns, performance optimization, and custom store architectures.
+            {:else if track.slug === 'svelte-typescript'}
+              Demonstrated proficiency in type-safe Svelte and SvelteKit application development with full TypeScript integration.
+            {:else}
+              Demonstrated proficiency in {track.title} through all required coursework and assessments.
+            {/if}
+          </p>
+        </div>
+
+        <!-- View certificate CTA -->
+        <a rel="external" href="/verify/{certificate?.id}"
+          class="flex items-center justify-center gap-2 bg-[#c9a84c] hover:brightness-110 text-[#1a1a1a] font-semibold text-sm px-6 py-3.5 rounded-xl transition-all w-full">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          View & Download Certificate
+        </a>
+
       </div>
     </div>
 
@@ -111,29 +136,15 @@
         class="flex items-center justify-center gap-2 bg-[#1c1c1c] hover:bg-[#222] border border-white/8 hover:border-white/14 text-[#f0ede8]/70 font-medium text-sm px-6 py-3.5 rounded-xl transition-all">
         Go to dashboard
       </a>
-      <a rel="external" href="/verify/{certificate?.id}"
-        class="flex items-center justify-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-6 py-3.5 rounded-xl transition-all">
-        View verify page →
-      </a>
-    </div>
-
-    <!-- LinkedIn share -->
-    <div class="bg-[#1c1c1c] border border-white/8 rounded-xl p-5 flex items-center justify-between gap-4">
-      <div>
-        <div class="font-mono text-[10px] text-[#f0ede8]/25 uppercase tracking-widest mb-1">Share on LinkedIn</div>
-        <p class="text-[#f0ede8]/40 text-sm font-light">
-          Let your network know you earned this certificate.
-        </p>
-      </div>
       <a
         href="https://www.linkedin.com/sharing/share-offsite/?url={encodeURIComponent(`https://svelteskill.dev/verify/${certificate?.id}`)}"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex-shrink-0 inline-flex items-center gap-2 bg-[#0077B5] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all">
+        class="flex items-center justify-center gap-2 bg-[#0077B5] hover:brightness-110 text-white font-semibold text-sm px-6 py-3.5 rounded-xl transition-all">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
           <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
         </svg>
-        Share
+        Share on LinkedIn
       </a>
     </div>
 

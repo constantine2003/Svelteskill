@@ -3,37 +3,44 @@ import type { RequestEvent } from '@sveltejs/kit';
 
 export const load = async ({ locals }: RequestEvent) => {
   const { user } = await locals.safeGetSession();
-
   if (!user) redirect(303, '/auth');
 
+  // Profile must resolve first (gate for onboarding redirect)
   const { data: profile, error: profileError } = await locals.supabase
     .from('profiles')
     .select('*')
-    .eq('id', user!.id)
+    .eq('id', user.id)
     .single();
 
-  // No profile found → send back to onboarding
   if (profileError || !profile) redirect(303, '/onboarding');
 
-  const { data: tracks } = await locals.supabase
-    .from('tracks')
-    .select('*')
-    .order('order_index');
+  // All remaining queries are independent — run them in parallel
+  const [
+    { data: tracks },
+    { data: progress },
+    { data: certificates },
+    { data: attempts }
+  ] = await Promise.all([
+    locals.supabase
+      .from('tracks')
+      .select('*')
+      .order('order_index'),
 
-  const { data: progress } = await locals.supabase
-    .from('user_progress')
-    .select('module_id')
-    .eq('user_id', user!.id);
+    locals.supabase
+      .from('user_progress')
+      .select('module_id')
+      .eq('user_id', user.id),
 
-  const { data: certificates } = await locals.supabase
-    .from('certificates')
-    .select('*, tracks(title, slug)')
-    .eq('user_id', user!.id);
+    locals.supabase
+      .from('certificates')
+      .select('*, tracks(title, slug)')
+      .eq('user_id', user.id),
 
-  const { data: attempts } = await locals.supabase
-    .from('exam_attempts')
-    .select('track_id, passed, score')
-    .eq('user_id', user!.id);
+    locals.supabase
+      .from('exam_attempts')
+      .select('track_id, passed, score')
+      .eq('user_id', user.id),
+  ]);
 
   return {
     profile,

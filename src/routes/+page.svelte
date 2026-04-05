@@ -3,6 +3,10 @@
   const user = $derived(data.profile);
 </script>
 
+<svelte:head>
+  <title>SvelteSkill</title>
+</svelte:head>
+
 <div class="min-h-screen bg-[#1a1a1a] text-[#f0ede8]">
 
   <!-- HERO -->

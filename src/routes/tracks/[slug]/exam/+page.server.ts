@@ -46,7 +46,31 @@ export const load = async ({ locals, params, parent }: RequestEvent & {
   if (certificateRes.data) throw redirect(303, `/tracks/${params?.slug}/exam/result`);
 
   // Shuffle questions for each attempt
-  const questions = (questionsRes.data ?? []).sort(() => Math.random() - 0.5);
+  function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // Shuffle questions AND each question's options together so correct_index stays in sync
+  const questions = shuffle(questionsRes.data ?? []).map(q => {
+    const options: string[] = Array.isArray(q.options)
+      ? q.options
+      : JSON.parse(q.options as string);
+
+    // Build index map before shuffling so we can track where correct answer lands
+    const indexed = options.map((opt, i) => ({ opt, correct: i === q.correct_index }));
+    const shuffled = shuffle(indexed);
+
+    return {
+      ...q,
+      options: shuffled.map(o => o.opt),
+      correct_index: shuffled.findIndex(o => o.correct),
+    };
+  });
 
   return {
     track,

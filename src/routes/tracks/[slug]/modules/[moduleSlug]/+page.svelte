@@ -135,6 +135,10 @@
   };
 </script>
 
+<svelte:head>
+  <title>{module.title} — {track.title} | SvelteSkill</title>
+</svelte:head>
+
 <div class="bg-[#1a1a1a] flex min-h-[calc(100vh-3.5rem)]">
 
   <!-- SIDEBAR -->

@@ -133,6 +133,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>{track.title} - Final Exam | SvelteSkill</title>
+</svelte:head>
+
 <div class="bg-[#1a1a1a] flex min-h-screen">
 
   <!-- SIDEBAR -->
