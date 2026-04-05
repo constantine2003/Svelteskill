@@ -4,12 +4,16 @@
   import { supabase } from '$lib/supabase/client';
   import { invalidate } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { theme } from '$lib/stores/theme';
 
   let { data, children } = $props();
-
   const profile = $derived(data.profile ?? null);
 
+  // Sync the store with whatever app.html already applied
   onMount(() => {
+    const saved = localStorage.getItem('theme') ?? 'dark';
+    theme.set(saved as 'dark' | 'light');
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event) => {
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
