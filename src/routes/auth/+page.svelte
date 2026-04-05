@@ -42,6 +42,12 @@
   }
 </script>
 
+<!-- Head -->
+<svelte:head>
+  <title>Login | SvelteSkill</title>
+</svelte:head>
+
+<!-- Page -->
 <div class="min-h-screen bg-[#1c1c1c] flex items-center justify-center px-4">
   <div class="w-full max-w-sm">
 
