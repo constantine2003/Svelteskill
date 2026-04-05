@@ -1,3 +1,6 @@
+//  Here will be the Logic for handling the OAuth callback from Supabase.
+//  This is where we exchange the temporary code for a session
+//  and then, check if the user has completed onboarding, and redirect them accordingly.
 import { redirect } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 

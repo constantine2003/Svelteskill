@@ -166,6 +166,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>{track.title} - Part {partIndex} Quiz | SvelteSkill</title>
+</svelte:head>
+
 <div class="bg-[#1a1a1a] flex min-h-screen">
 
   <!-- SIDEBAR -->

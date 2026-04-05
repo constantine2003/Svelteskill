@@ -38,6 +38,10 @@
   );
 </script>
 
+<svelte:head>
+  <title>Certificate - {track.title} | SvelteSkill</title>
+</svelte:head>
+
 <div class="min-h-screen bg-[#1a1a1a]">
   <main class="max-w-[640px] mx-auto px-8 py-20">
 
