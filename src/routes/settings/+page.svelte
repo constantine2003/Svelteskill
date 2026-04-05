@@ -47,6 +47,10 @@
   const profileSlug = $derived(profile.display_name.toLowerCase().replace(/\s+/g, '-'));
 </script>
 
+<svelte:head>
+  <title>Profile Settings</title>
+</svelte:head>
+
 <div class="min-h-screen bg-[#1a1a1a]">
   <main class="max-w-[640px] mx-auto px-4 sm:px-8 py-8">
 

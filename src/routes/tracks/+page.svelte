@@ -83,6 +83,10 @@
   };
 </script>
 
+<svelte:head>
+  <title>Tracks</title>
+</svelte:head>
+
 <div class="min-h-screen bg-[#1a1a1a]">
   <main class="max-w-[1100px] mx-auto px-8 py-14">
 

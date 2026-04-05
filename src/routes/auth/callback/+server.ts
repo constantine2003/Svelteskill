@@ -21,6 +21,10 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 
   if (!session?.user) redirect(303, '/auth?error=callback_error');
 
+  // Sanitize `next` to only allow relative paths — prevents open redirect attacks
+  // where a malicious link could set ?next=https://evil.com and hijack the redirect
+  const safeNext = next.startsWith('/') ? next : '/dashboard';
+
   // Check if the user has completed onboarding.
   // Select the bare minimum — just 'id' — we only need to know if a row exists.
   const { data: profile } = await locals.supabase
@@ -31,5 +35,5 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 
   // No profile row → first-time login, send to onboarding
   // Profile exists → returning user, send to intended destination
-  redirect(303, profile ? next : '/onboarding');
+  redirect(303, profile ? safeNext : '/onboarding');
 };

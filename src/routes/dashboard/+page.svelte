@@ -85,6 +85,10 @@
   });
 </script>
 
+<svelte:head>
+  <title>Dashboard</title>
+</svelte:head>
+
 <div class="min-h-screen bg-[#1a1a1a]">
   <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
 

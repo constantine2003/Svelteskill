@@ -1,8 +1,19 @@
 <script lang="ts">
   import { supabase } from '$lib/supabase/client';
+  // import { goto } from '$app/navigation';
+  // import { onMount } from 'svelte';
 
   let loading = $state(false);
   let error = $state('');
+
+  // Redirect already-authenticated users away from this page.
+  // This runs client-side on mount — the server-side guard lives in the
+  // dashboard's load() function. Both are needed: the server guard protects
+  // the data, this guard protects the UX (no flash of the login page).
+  // onMount(async () => {
+  //   const { data: { session } } = await supabase.auth.getSession();
+  //   if (session) await goto('/dashboard', { replaceState: true });
+  // });
 
   async function signInWithGitHub() {
     loading = true;
