@@ -38,5 +38,5 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 
   // No profile row → first-time login, send to onboarding
   // Profile exists → returning user, send to intended destination
-  redirect(303, profile ? safeNext : '/onboarding');
+  redirect(303, profile ? `${safeNext}?onboarded=1` : '/onboarding');
 };

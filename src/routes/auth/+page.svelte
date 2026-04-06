@@ -1,9 +1,34 @@
 <script lang="ts">
+  /**
+   * Login page — presents OAuth sign-in options (GitHub and Google).
+   *
+   * Theming:
+   *   All colors use CSS variables defined in app.css so the page responds
+   *   correctly to both dark mode (:root) and light mode (:root.light).
+   *
+   * Auth flow:
+   *   Clicking either button calls Supabase's signInWithOAuth, which
+   *   redirects the browser to the provider. After the user authorises,
+   *   the provider redirects back to /auth/callback where the session
+   *   is established before forwarding to /dashboard.
+   *
+   * Redirect guard (commented out):
+   *   The onMount block below can redirect already-authenticated users
+   *   away from this page client-side. It is currently disabled because
+   *   the server-side load() guard in the dashboard handles this more
+   *   reliably. Re-enable if you need to prevent a flash of the login UI.
+   */
+
   import { supabase } from '$lib/supabase/client';
   // import { goto } from '$app/navigation';
   // import { onMount } from 'svelte';
 
+  // ── State ────────────────────────────────────────────────────────────────
+
+  /** True while an OAuth redirect is in progress — disables both buttons. */
   let loading = $state(false);
+
+  /** Holds the error message string if the OAuth call fails, otherwise empty. */
   let error = $state('');
 
   // Redirect already-authenticated users away from this page.
@@ -15,70 +40,113 @@
   //   if (session) await goto('/dashboard', { replaceState: true });
   // });
 
+  // ── Auth actions ─────────────────────────────────────────────────────────
+
+  /**
+   * Initiates the GitHub OAuth flow.
+   * Supabase redirects the browser to GitHub; after authorisation GitHub
+   * redirects to /auth/callback with a code that Supabase exchanges for
+   * a session. The `redirectTo` must be listed as an allowed callback URL
+   * in both Supabase and the GitHub OAuth app settings.
+   */
   async function signInWithGitHub() {
     loading = true;
-    error = '';
+    error   = '';
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+      options:  { redirectTo: `${window.location.origin}/auth/callback` }
     });
     if (err) error = err.message;
     loading = false;
   }
 
+  /**
+   * Initiates the Google OAuth flow.
+   * Same flow as GitHub — see signInWithGitHub above.
+   * The `redirectTo` must be listed as an authorised redirect URI in the
+   * Google Cloud Console OAuth credentials for this project.
+   */
   async function signInWithGoogle() {
     loading = true;
-    error = '';
+    error   = '';
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+      options:  { redirectTo: `${window.location.origin}/auth/callback` }
     });
     if (err) error = err.message;
     loading = false;
   }
 </script>
 
-<!-- Head -->
 <svelte:head>
   <title>Login | SvelteSkill</title>
 </svelte:head>
 
-<!-- Page -->
-<div class="min-h-screen bg-[#1c1c1c] flex items-center justify-center px-4">
+<!--
+  Root wrapper
+  ────────────
+  Uses var(--bg) instead of a hardcoded color so this page respects both
+  dark mode (:root) and light mode (:root.light) defined in app.css.
+  Centered layout — login pages have a single focal card.
+-->
+<div class="min-h-screen flex items-center justify-center px-4" style="background: var(--bg)">
   <div class="w-full max-w-sm">
 
-    <!-- Logo -->
+    <!-- ── Logo + heading ────────────────────────────────────────────────
+         Brand lockup above the card. The logo links back to the landing
+         page so users who arrived here by mistake can navigate away easily.
+    ──────────────────────────────────────────────────────────────────── -->
     <div class="text-center mb-10">
+
+      <!-- Brand logo + wordmark -->
       <a href="/" rel="external" class="inline-flex items-center gap-2 mb-6">
         <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
           <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
         </div>
-        <span class="font-serif italic text-[#f0ede8] text-xl">SvelteSkill</span>
+        <span class="font-serif italic text-xl" style="color: var(--text)">SvelteSkill</span>
       </a>
-      <h1 class="text-[#f0ede8] text-2xl font-serif italic mb-2">Welcome back</h1>
-      <p class="text-[#f0ede8]/50 text-sm font-light">Sign in to continue your Svelte journey</p>
+
+      <!-- Page heading -->
+      <h1 class="text-2xl font-serif italic mb-2" style="color: var(--text)">Welcome back</h1>
+
+      <!-- Subheading — secondary prominence using text-muted -->
+      <p class="text-sm font-light" style="color: var(--text-muted)">
+        Sign in to continue your Svelte journey
+      </p>
     </div>
 
-    <!-- Auth card -->
-    <div class="bg-[#242424] border border-white/10 rounded-xl p-8">
+    <!-- ── Auth card ──────────────────────────────────────────────────────
+         Contains the OAuth buttons and any error feedback.
+         Uses var(--surface) / var(--border) so it lifts off the background
+         in both themes without needing two separate color definitions.
+    ──────────────────────────────────────────────────────────────────── -->
+    <div class="rounded-xl p-8" style="background: var(--surface); border: 1px solid var(--border)">
 
+      <!-- ── Error banner ────────────────────────────────────────────────
+           Shown when an OAuth call fails (e.g. provider misconfiguration,
+           network error). The error string comes from Supabase directly.
+      ────────────────────────────────────────────────────────────────── -->
       {#if error}
-        <div class="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+        <div
+          class="mb-4 px-4 py-3 rounded-lg text-red-400 text-sm"
+          style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2)"
+        >
           {error}
         </div>
       {/if}
 
       <div class="flex flex-col gap-3">
 
-        <!-- GitHub -->
+        <!-- ── GitHub button ────────────────────────────────────────────
+             Filled style — primary action. Uses var(--text) as background
+             and var(--bg) as text color so it inverts correctly in both
+             themes (white-on-dark in dark mode, dark-on-light in light mode).
+        ────────────────────────────────────────────────────────────── -->
         <button
           onclick={signInWithGitHub}
           disabled={loading}
-          class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[#f0ede8] hover:bg-white text-[#1c1c1c] font-semibold text-sm rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex items-center justify-center gap-3 px-4 py-3 font-semibold text-sm rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+          style="background: var(--text); color: var(--bg)"
         >
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -86,12 +154,22 @@
           Continue with GitHub
         </button>
 
-        <!-- Google -->
+        <!-- ── Google button ────────────────────────────────────────────
+             Outlined style — secondary action. Uses a transparent background
+             with a subtle border so it sits behind GitHub visually without
+             disappearing against the card surface in either theme.
+        ────────────────────────────────────────────────────────────── -->
         <button
           onclick={signInWithGoogle}
           disabled={loading}
-          class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-transparent hover:bg-white/5 text-[#f0ede8] font-medium text-sm rounded-lg border border-white/10 hover:border-white/20 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex items-center justify-center gap-3 px-4 py-3 font-medium text-sm rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          style="
+            background: transparent;
+            color:      var(--text);
+            border:     1px solid var(--border2);
+          "
         >
+          <!-- Google's brand colors are fixed — do not substitute with CSS vars -->
           <svg class="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -103,13 +181,17 @@
 
       </div>
 
-      <p class="text-center text-[#f0ede8]/30 text-xs mt-6 font-light">
+      <!-- Terms note — faint since it's legal boilerplate, not a CTA -->
+      <p class="text-center text-xs mt-6 font-light" style="color: var(--text-faint)">
         By signing in you agree to learn Svelte for free.
       </p>
-
     </div>
 
-    <p class="text-center text-[#f0ede8]/25 text-xs mt-6 font-light">
+    <!-- ── Footer tagline ────────────────────────────────────────────────
+         Below the card — even fainter than the terms note since it is
+         purely decorative reassurance copy.
+    ──────────────────────────────────────────────────────────────────── -->
+    <p class="text-center text-xs mt-6 font-light" style="color: var(--text-faint)">
       Free forever · No credit card · No company
     </p>
 

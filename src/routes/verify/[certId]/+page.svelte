@@ -1,4 +1,22 @@
 <script lang="ts">
+  import Footer from "../../../lib/components/layout/Footer.svelte";
+  /**
+   * Certificate verify page — public page for viewing and downloading a certificate.
+   *
+   * Features:
+   *   - Renders the gold parchment certificate (kept as-is, fixed light background)
+   *   - PNG download via html2canvas at 3x scale
+   *   - Verified badge + cert ID display
+   *   - Issuer info card below the certificate
+   *   - Invalid state when certificate ID is not found
+   *
+   * The certificate itself always uses a fixed light parchment background (#faf7f2)
+   * regardless of the current theme — this ensures the downloaded PNG is consistent
+   * and the cert doesn't blend into the page in light mode.
+   */
+
+  // ── Types ────────────────────────────────────────────────────────────────
+
   interface Props {
     data: {
       certificate: {
@@ -13,9 +31,13 @@
   }
 
   const { data }: Props = $props();
-  const certificate = $derived(data.certificate);
-  const certId = $derived(data.certId);
 
+  // ── Derived state ────────────────────────────────────────────────────────
+
+  const certificate = $derived(data.certificate);
+  const certId      = $derived(data.certId);
+
+  /** Long-form date shown on the certificate, e.g. "April 6, 2026". */
   const formattedDate = $derived(
     certificate?.issued_at
       ? new Date(certificate.issued_at).toLocaleDateString('en-US', {
@@ -24,11 +46,18 @@
       : ''
   );
 
+  /** First 8 chars of the UUID uppercased — shown as the short cert ID. */
   const shortId = $derived(certId.toUpperCase().slice(0, 8));
 
-  let certEl = $state<HTMLDivElement>();
+  // ── Download ─────────────────────────────────────────────────────────────
+
+  let certEl     = $state<HTMLDivElement>();
   let downloading = $state(false);
 
+  /**
+   * Renders the certificate DOM node to a canvas via html2canvas
+   * and triggers a PNG download. Scale 3 gives a high-res output.
+   */
   async function downloadPng() {
     if (!certEl || downloading) return;
     downloading = true;
@@ -58,17 +87,19 @@
   </title>
 </svelte:head>
 
-<div class="min-h-screen bg-[#1a1a1a] flex flex-col">
+<div class="min-h-screen flex flex-col" style="background: var(--bg)">
 
   <main class="flex-1 flex items-center justify-center px-8 py-16">
 
     {#if certificate}
       <div class="w-full max-w-[820px]">
 
-        <!-- Verified badge -->
+        <!-- ── Verified badge ─────────────────────────────────────────── -->
         <div class="flex items-center justify-center mb-10">
-          <div class="inline-flex items-center gap-3 bg-[#FF3E00]/[0.08] border border-[#FF3E00]/20 rounded-full px-6 py-3">
-            <div class="w-5 h-5 rounded-full bg-[#FF3E00]/20 flex items-center justify-center">
+          <div class="inline-flex items-center gap-3 rounded-full px-6 py-3"
+            style="background: var(--orange-faint); border: 1px solid rgba(255,62,0,0.2)">
+            <div class="w-5 h-5 rounded-full flex items-center justify-center"
+              style="background: var(--orange-muted)">
               <svg class="w-3 h-3 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M20 6L9 17l-5-5"/>
               </svg>
@@ -79,8 +110,18 @@
           </div>
         </div>
 
-        <!-- Gold parchment cert -->
-        <div bind:this={certEl} class="relative bg-[#faf7f2] border border-[#c9a84c]" style="aspect-ratio: 1.414 / 1;">
+        <!-- ── Gold parchment certificate ───────────────────────────────
+             The certificate always uses a fixed #faf7f2 background and
+             #1a1a1a text regardless of theme — this ensures:
+               1. The downloaded PNG always looks the same
+               2. It doesn't disappear into a white page in light mode
+             A subtle shadow separates it from the page background.
+        ─────────────────────────────────────────────────────────────── -->
+        <div
+          bind:this={certEl}
+          class="relative border border-[#c9a84c]"
+          style="background: #faf7f2; aspect-ratio: 1.414 / 1; box-shadow: 0 4px 40px rgba(0,0,0,0.15);"
+        >
 
           <!-- Corner ornaments -->
           {#each [
@@ -101,7 +142,7 @@
 
             <!-- TOP SECTION -->
             <div>
-              <!-- Header -->
+              <!-- Header row -->
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2.5">
                   <div class="w-7 h-7 bg-white border border-[#c9a84c]/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -112,10 +153,9 @@
                 <span class="font-mono text-[9px] text-[#1a1a1a]/35 tracking-wide" style="line-height:1;">{formattedDate}</span>
               </div>
 
-              <!-- Top divider -->
               <div class="h-px bg-[#c9a84c]/35 mb-4"></div>
 
-              <!-- Seal -->
+              <!-- Wax seal -->
               <div class="flex justify-center mb-2.5">
                 <div class="relative w-12 h-12 rounded-full bg-[#faf7f2] border-2 border-[#c9a84c] flex items-center justify-center">
                   <div class="absolute inset-[2px] rounded-full border border-dashed border-[#c9a84c]/60"></div>
@@ -125,12 +165,10 @@
                 </div>
               </div>
 
-              <!-- Cert type -->
               <div class="text-center font-mono text-[8px] tracking-[3px] uppercase text-[#c9a84c] mb-2">
                 Certificate of Completion
               </div>
 
-              <!-- Headline -->
               <div class="text-center font-serif italic text-[22px] text-[#1a1a1a] leading-tight mb-1">
                 This is to certify that
               </div>
@@ -153,7 +191,7 @@
                 <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
               </div>
 
-              <!-- Body text -->
+              <!-- Proficiency description -->
               <p class="text-center text-[15px] text-[#1a1a1a]/45 leading-relaxed max-w-md mx-auto">
                 has successfully completed all required coursework and demonstrated proficiency in
                 <strong class="text-[#1a1a1a]/70 font-semibold">{certificate.tracks?.title}</strong>
@@ -161,9 +199,9 @@
                   encompassing core Svelte concepts, reactive programming principles, and component-driven UI development.
                 {:else if certificate.tracks?.slug === 'sveltekit'},
                   encompassing file-based routing, server-side rendering, and building full-stack applications with SvelteKit.
-                {:else if certificate.tracks?.slug === 'svelte-advanced'}, 
+                {:else if certificate.tracks?.slug === 'svelte-advanced'},
                   encompassing advanced Svelte patterns, performance optimization, and custom store architectures.
-                {:else if certificate.tracks?.slug === 'svelte-typescript'}, 
+                {:else if certificate.tracks?.slug === 'svelte-typescript'},
                   encompassing type-safe Svelte and SvelteKit application development with full TypeScript integration.
                 {/if}
               </p>
@@ -173,21 +211,16 @@
             <div>
               <!-- Signature row -->
               <div class="flex items-end justify-between gap-4 mb-3">
-
                 <div class="flex-1 text-center">
-                  <img
-                    src="/signature.svg"
-                    alt="Signature"
-                    class="h-8 w-auto mx-auto mb-1.5"
-                    style="filter: brightness(0) opacity(0.55);"
-                    crossorigin="anonymous"
-                  />
+                  <img src="/signature.svg" alt="Signature" class="h-8 w-auto mx-auto mb-1.5"
+                    style="filter: brightness(0) opacity(0.55);" crossorigin="anonymous" />
                   <div class="h-px bg-[#c9a84c]/40 mb-1.5"></div>
                   <div class="font-mono text-[7px] text-[#1a1a1a]/35 uppercase tracking-wide leading-relaxed">
                     Daniel Montesclaros<br/>Lead Developer · Founder
                   </div>
                 </div>
 
+                <!-- Official seal -->
                 <div class="flex-shrink-0 w-14 h-14 rounded-full border border-[#c9a84c] bg-[#faf7f2] flex flex-col items-center justify-center mb-1">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="mb-0.5">
                     <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c" opacity="0.7"/>
@@ -206,10 +239,9 @@
                     SvelteSkill<br/>Platform Certification
                   </div>
                 </div>
-
               </div>
 
-              <!-- Footer -->
+              <!-- Footer row -->
               <div class="h-px bg-[#c9a84c]/20 mb-2"></div>
               <div class="flex items-center justify-between">
                 <span class="font-mono text-[7px] text-[#1a1a1a]/20 tracking-widest">SVSK · {shortId}</span>
@@ -219,8 +251,9 @@
           </div>
         </div>
 
-        <!-- Actions row -->
+        <!-- ── Actions row ────────────────────────────────────────────── -->
         <div class="mt-5 flex items-center justify-between gap-4">
+          <!-- Download PNG — uses html2canvas, see downloadPng() above -->
           <button
             onclick={downloadPng}
             disabled={downloading}
@@ -239,36 +272,47 @@
             {/if}
           </button>
 
+          <!-- Verified status indicator -->
           <div class="flex items-center gap-2">
             <div class="w-2 h-2 rounded-full bg-[#FF3E00] animate-pulse"></div>
             <span class="font-mono text-[10px] text-[#FF3E00]">Verified · SVSK·{shortId}</span>
           </div>
         </div>
 
-        <!-- Issuer info -->
-        <div class="mt-5 bg-[#1c1c1c] border border-white/8 rounded-xl p-5 flex items-center justify-between gap-4">
+        <!-- ── Issuer info card ────────────────────────────────────────── -->
+        <div class="mt-5 rounded-xl p-5 flex items-center justify-between gap-4"
+          style="background: var(--surface); border: 1px solid var(--border)">
           <div class="flex items-center gap-4">
             {#if certificate.profiles?.avatar_url}
               <img
                 src={certificate.profiles.avatar_url}
                 alt={certificate.profiles.display_name}
-                class="w-10 h-10 rounded-full border border-white/10"
+                class="w-10 h-10 rounded-full"
+                style="border: 1px solid var(--border)"
               />
             {/if}
             <div>
-              <div class="font-mono text-[9px] text-[#f0ede8]/25 uppercase tracking-widest mb-0.5">Earned by</div>
-              <div class="text-[#f0ede8]/70 text-sm font-light">{certificate.profiles?.display_name}</div>
+              <div class="font-mono text-[9px] uppercase tracking-widest mb-0.5" style="color: var(--text-faint)">
+                Earned by
+              </div>
+              <div class="text-sm font-light" style="color: var(--text-muted)">
+                {certificate.profiles?.display_name}
+              </div>
             </div>
           </div>
           <div class="text-right">
-            <div class="font-mono text-[9px] text-[#f0ede8]/25 uppercase tracking-widest mb-0.5">Issued on</div>
-            <div class="text-[#f0ede8]/50 text-sm font-light">{formattedDate}</div>
+            <div class="font-mono text-[9px] uppercase tracking-widest mb-0.5" style="color: var(--text-faint)">
+              Issued on
+            </div>
+            <div class="text-sm font-light" style="color: var(--text-muted)">{formattedDate}</div>
           </div>
         </div>
 
-        <!-- CTA -->
+        <!-- ── CTA for non-learners viewing the page ──────────────────── -->
         <div class="mt-6 text-center">
-          <p class="text-[#f0ede8]/25 text-sm font-light mb-3">Want to earn your own Svelte certificate?</p>
+          <p class="text-sm font-light mb-3" style="color: var(--text-faint)">
+            Want to earn your own Svelte certificate?
+          </p>
           <a rel="external" href="/auth"
             class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-all">
             Start learning free →
@@ -278,20 +322,26 @@
       </div>
 
     {:else}
-      <!-- INVALID CERT -->
+      <!-- ── Invalid certificate screen ───────────────────────────────── -->
       <div class="text-center max-w-md">
-        <div class="w-16 h-16 bg-white/4 border border-white/8 rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <svg class="w-7 h-7 text-[#f0ede8]/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
+          style="background: var(--surface2); border: 1px solid var(--border)">
+          <svg class="w-7 h-7" style="color: var(--text-faint)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <h1 class="font-serif italic text-2xl text-[#f0ede8]/60 mb-3">Certificate not found</h1>
-        <p class="text-[#f0ede8]/30 text-sm font-light mb-2">
-          The certificate ID <span class="font-mono text-[#f0ede8]/50">SVSK·{shortId}</span> does not exist or may have been revoked.
+        <h1 class="font-serif italic text-2xl mb-3" style="color: var(--text-muted)">
+          Certificate not found
+        </h1>
+        <p class="text-sm font-light mb-2" style="color: var(--text-faint)">
+          The certificate ID
+          <span class="font-mono" style="color: var(--text-muted)">SVSK·{shortId}</span>
+          does not exist or may have been revoked.
         </p>
-        <p class="text-[#f0ede8]/20 text-xs font-mono mb-8">{certId}</p>
+        <p class="text-xs font-mono mb-8" style="color: var(--text-faint)">{certId}</p>
         <a rel="external" href="/"
-          class="inline-flex items-center gap-2 bg-[#1c1c1c] hover:bg-[#222] border border-white/8 text-[#f0ede8]/50 font-medium text-sm px-6 py-2.5 rounded-lg transition-all">
+          class="inline-flex items-center gap-2 font-medium text-sm px-6 py-2.5 rounded-lg transition-all"
+          style="background: var(--surface); border: 1px solid var(--border); color: var(--text-muted)">
           ← Back to SvelteSkill
         </a>
       </div>
@@ -299,20 +349,7 @@
 
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-white/8 px-5 md:px-10 py-6 md:py-7 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#141414]">
-    <div class="flex items-center gap-2">
-      <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-        <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="max-w-full max-h-full object-contain" />
-      </div>
-      <span class="font-serif italic text-[#f0ede8]/40 text-[13px]">
-        <span class="text-[#FF3E00]">Svelte</span>Skill — built for the community
-      </span>
-    </div>
-    <div class="flex gap-6">
-      <a rel="external" href="/verify" class="font-mono text-[9px] uppercase tracking-widest text-[#f0ede8]/25 hover:text-[#f0ede8]/50 transition-colors no-underline">Verify</a>
-      <a rel="external" href="https://github.com" class="font-mono text-[9px] uppercase tracking-widest text-[#f0ede8]/25 hover:text-[#f0ede8]/50 transition-colors no-underline">GitHub</a>
-    </div>
-  </footer>
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
+  <Footer />
 
 </div>
