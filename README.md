@@ -62,8 +62,8 @@ Built by a developer who wanted it to exist, for a community that deserves it. N
 |---|---|---|---|
 | 01 | **Svelte Fundamentals** | 12 | ✅ Available |
 | 02 | **SvelteKit** | 12 | ✅ Available |
-| 03 | **Svelte Advanced** | 12 | 🔜 Coming soon |
-| 04 | **Svelte + TypeScript** | 12 | 🔜 Coming soon |
+| 03 | **Svelte Advanced** | 12 | ✅ Available |
+| 04 | **Svelte + TypeScript** | 12 | ✅ Available |
 
 ---
 
@@ -205,6 +205,7 @@ svelteskill/
 │   ├── lib/
 │   │   ├── components/layout/
 │   │   │   └── Navbar.svelte            # Auth-aware navbar with theme toggle
+│   │   │   └── Footer.svelte            # Footer
 │   │   ├── stores/
 │   │   │   └── theme.ts                 # Dark/light mode store
 │   │   └── supabase/
@@ -233,7 +234,7 @@ svelteskill/
 │
 ├── docs/                                # Schema SQL + seed files
 ├── static/                              # Favicon, OG image
-├── .env.example
+├── .env
 ├── svelte.config.js
 ├── tailwind.config.js
 └── vite.config.ts
@@ -291,10 +292,10 @@ Found an error in a lesson or a wrong answer in a quiz? Open an issue with the `
 Think a concept could be explained better? Open a discussion or PR.
 
 **Report a bug**
-[Open a bug report](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=bug) with steps to reproduce.
+[Open a bug report](https://github.com/constantine2003/svelteskill/issues/new?labels=bug) with steps to reproduce.
 
 **Suggest a feature**
-[Open a feature request](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=enhancement) describing what you want and why.
+[Open a feature request](https://github.com/constantine2003/svelteskill/issues/new?labels=enhancement) describing what you want and why.
 
 **Add new track content**
 Interested in contributing lessons for Track 3 or 4? Open an issue first to discuss scope, then submit a PR with the SQL inserts following the existing lesson format.
@@ -354,11 +355,11 @@ npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/lib/supabas
 - [x] Sequential track unlocking
 - [x] Public user profiles
 - [x] Dark + light mode with no flash
-- [ ] Svelte Advanced track
-- [ ] Svelte + TypeScript track
+- [x] Svelte Advanced track
+- [x] Svelte + TypeScript track
 - [ ] Per-lesson feedback integrated with GitHub Issues
 - [ ] Code playground (StackBlitz embed)
-- [ ] PDF certificate download
+- [x] PDF certificate download
 - [ ] Email notification on certificate issue
 
 ---
