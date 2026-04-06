@@ -23,7 +23,7 @@ Earn a certificate anyone can verify — at zero cost, forever.
 
 <br />
 
-**[svelteskill.vercel.app](https://svelteskill.vercel.app/)** &nbsp;·&nbsp; [Report a Bug](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=bug&template=bug_report.md) &nbsp;·&nbsp; [Request a Feature](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=enhancement) &nbsp;·&nbsp; [Curriculum Feedback](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=curriculum)
+**[svelteskill.vercel.app](https://svelteskill.vercel.app/)** &nbsp;·&nbsp; [Report a Bug](https://github.com/constantine2003/svelteskill/issues/new?labels=bug&template=bug_report.md) &nbsp;·&nbsp; [Request a Feature](https://github.com/constantine2003/svelteskill/issues/new?labels=enhancement) &nbsp;·&nbsp; [Curriculum Feedback](https://github.com/constantine2003/svelteskill/issues/new?labels=curriculum)
 
 <br />
 
