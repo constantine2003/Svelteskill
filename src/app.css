@@ -2,32 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ── */
 html, body {
-  background-color: #1c1c1c;
-  color: #f0ede8;
+  background-color: var(--bg);
+  color: var(--text);
   min-height: 100vh;
 }
 
-/* //scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
+* { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+
+/* ── DARK MODE (default) ── */
+:root {
+  --bg: #1a1a1a;
+  --bg2: #141414;
+  --surface: #1c1c1c;
+  --surface2: #222222;
+  --border: rgba(255, 255, 255, 0.08);
+  --border2: rgba(255, 255, 255, 0.12);
+  --text: #f0ede8;
+  --text-muted: #c8c4be;
+  --text-faint: #7a7774;
+  --orange: #FF3E00;
+  --orange-muted: rgba(255, 62, 0, 0.15);
+  --orange-faint: rgba(255, 62, 0, 0.06);
+  --nav-bg: rgba(28, 28, 28, 0.92);
+  --code-block-bg: #111111;
+  --code-block-text: #abb2bf;
 }
 
-::-webkit-scrollbar-track {
+/* ── LIGHT MODE ── */
+:root.light {
+  --bg: #f7f5f2;
+  --bg2: #eeebe6;
+  --surface: #ffffff;
+  --surface2: #f2efe9;
+  --border: rgba(0, 0, 0, 0.08);
+  --border2: rgba(0, 0, 0, 0.14);
+  --text: #1a1a1a;
+  --text-muted: #3a3734;
+  --text-faint: #6b6866;
+  --orange: #FF3E00;
+  --orange-muted: rgba(255, 62, 0, 0.18);
+  --orange-faint: rgba(255, 62, 0, 0.09);
+  --nav-bg: rgba(247, 245, 242, 0.92);
+  --code-block-bg: #f0ede8;
+  --code-block-text: #383a42;
+}
+
+/* ── Lesson content ── */
+.lesson-content h1,
+.lesson-content h2,
+.lesson-content h3,
+.lesson-content strong { color: var(--text); }
+
+.lesson-content em { color: var(--text-muted); }
+
+.lesson-content code {
+  background: var(--orange-faint);
+  color: #FF3E00;
+}
+
+.lesson-content pre {
+  background: var(--code-block-bg);
+  border: 1px solid var(--border);
+}
+
+.lesson-content pre code {
   background: transparent;
+  color: var(--code-block-text);
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(240, 237, 232, 0.08);
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(240, 237, 232, 0.15);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(240, 237, 232, 0.08) transparent;
+.lesson-content blockquote {
+  background: var(--orange-faint);
+  color: var(--text-muted);
 }

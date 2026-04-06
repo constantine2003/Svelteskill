@@ -1,5 +1,14 @@
 <script lang="ts">
+  /**
+   * Track detail page — shows all modules grouped by part, progress,
+   * certificate status, exam history, and the CTA for the final exam.
+   *
+   * Data is loaded server-side via +page.server.ts and passed in through `data`.
+   */
+
   const { data } = $props();
+
+  // ── Types ────────────────────────────────────────────────────────────────
 
   type TrackModule = {
     id: number;
@@ -8,12 +17,14 @@
     title: string;
   };
 
-  const track = $derived(data.track);
-  const modules = $derived((data as typeof data & { modules: TrackModule[] }).modules);
+  // ── Derived state ────────────────────────────────────────────────────────
+
+  const track              = $derived(data.track);
+  const modules            = $derived((data as typeof data & { modules: TrackModule[] }).modules);
   const completedModuleIds = $derived(data.completedModuleIds);
-  const certificate = $derived(data.certificate);
-  const attempts = $derived(data.attempts);
-  const allPartsPassed = $derived(data.allPartsPassed);
+  const certificate        = $derived(data.certificate);
+  const attempts           = $derived(data.attempts);
+  const allPartsPassed     = $derived(data.allPartsPassed);
   const allPartAssessments = $derived(data.allPartAssessments);
 
   const completedCount = $derived(
@@ -21,30 +32,45 @@
   );
   const totalCount = $derived(modules.length);
 
+  /** 0–100 integer shown in the progress card. */
   const percent = $derived(
     totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
   );
 
   const allModulesDone = $derived(completedCount === totalCount && totalCount > 0);
 
-  // Guard against: passed exam but cert not yet generated (race condition)
+  /** True if the user has at least one passing attempt (cert may not exist yet). */
   const examPassed = $derived(attempts.some((a: { passed: boolean }) => a.passed));
+
+  /**
+   * The "Take exam" CTA is shown only when:
+   *   - all modules are done
+   *   - all 4 part quizzes are passed
+   *   - no certificate has been issued yet
+   *   - user hasn't already passed the exam (race-condition guard)
+   */
   const readyForExam = $derived(allModulesDone && allPartsPassed && !certificate && !examPassed);
 
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  /** Returns true if the given module has been marked complete. */
   function isCompleted(moduleId: number): boolean {
     return completedModuleIds.includes(moduleId);
   }
 
+  /** Returns true if the part quiz for the given part index has been passed. */
   function isPartQuizPassed(pi: number): boolean {
     return allPartAssessments.some(
       (pa: { part_index: number; passed: boolean }) => pa.part_index === pi && pa.passed
     );
   }
 
+  /** The first incomplete module — used to drive the "Continue" CTA. */
   const nextModule = $derived(
     modules.find((m: { id: number }) => !completedModuleIds.includes(m.id))
   );
 
+  /** Human-readable names for each of the four track parts. */
   const partLabels: Record<number, string> = {
     1: 'The Foundation',
     2: 'Interactivity',
@@ -52,6 +78,11 @@
     4: 'Advanced Patterns'
   };
 
+  /**
+   * Returns the modules that belong to a given part index.
+   * Partitioning is based on order_index ranges:
+   *   Part 1 → 1–3 | Part 2 → 4–6 | Part 3 → 7–9 | Part 4 → 10+
+   */
   function getPartModules(pIdx: number) {
     return modules.filter((m: { order_index: number }) => {
       const oi = m.order_index;
@@ -67,20 +98,21 @@
   <title>{track.title}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-[#1a1a1a]">
-  <main class="max-w-[900px] mx-auto px-8 py-14">
+<div class="min-h-screen" style="background: var(--bg)">
+  <main class="max-w-[900px] mx-auto px-4 sm:px-8 py-14">
 
-    <!-- Back -->
+    <!-- ── Back link ────────────────────────────────────────────────────── -->
     <a rel="external" href="/tracks"
-      class="inline-flex items-center gap-2 text-[#f0ede8]/30 hover:text-[#f0ede8]/60 text-sm font-mono transition-colors mb-10">
+      class="inline-flex items-center gap-2 text-sm font-mono transition-colors mb-10"
+      style="color: var(--text-faint)">
       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M19 12H5M12 5l-7 7 7 7"/>
       </svg>
       All tracks
     </a>
 
-    <!-- Track header -->
-    <div class="flex items-start justify-between gap-8 mb-12">
+    <!-- ── Track header ─────────────────────────────────────────────────── -->
+    <div class="flex flex-col sm:flex-row items-start justify-between gap-8 mb-12">
       <div class="flex-1">
         <div class="flex items-center gap-2.5 mb-4">
           <div class="w-4 h-px bg-[#FF3E00]"></div>
@@ -88,26 +120,31 @@
             Track {track.order_index} of 4
           </span>
         </div>
-        <h1 class="font-serif italic text-[clamp(28px,4vw,44px)] font-normal tracking-[-1.5px] text-[#f0ede8] mb-3">
+        <h1 class="font-serif italic text-[clamp(28px,4vw,44px)] font-normal tracking-[-1.5px] mb-3"
+          style="color: var(--text)">
           {track.title}
         </h1>
-        <p class="text-[#f0ede8]/40 text-sm font-light leading-relaxed max-w-lg">
+        <p class="text-sm font-light leading-relaxed max-w-lg" style="color: var(--text-muted)">
           {track.description}
         </p>
       </div>
 
-      <!-- Status card -->
-      <div class="flex-shrink-0 bg-[#1c1c1c] border border-white/8 rounded-xl p-6 min-w-[200px]">
+      <!-- Status card — shows certificate info or progress percentage -->
+      <div class="flex-shrink-0 rounded-xl p-6 min-w-[200px]"
+        style="background: var(--surface); border: 1px solid var(--border)">
         {#if certificate}
+          <!-- Certified state -->
           <div class="text-center">
-            <div class="w-10 h-10 bg-[#FF3E00]/15 rounded-xl flex items-center justify-center mx-auto mb-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
+              style="background: var(--orange-muted)">
               <svg class="w-5 h-5 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 15l-2 5-3-1-1 3-4-4 3-1-1-3 5-2"/><circle cx="12" cy="8" r="5"/>
               </svg>
             </div>
             <div class="font-mono text-[9px] text-[#FF3E00] tracking-widest uppercase mb-1">Certified</div>
-            <div class="font-serif italic text-sm text-[#f0ede8]/60 mb-4">
-              {new Date((certificate as unknown as { issued_at: string }).issued_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            <div class="font-serif italic text-sm mb-4" style="color: var(--text-muted)">
+              {new Date((certificate as unknown as { issued_at: string }).issued_at)
+                .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
             <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
               class="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#FF3E00] hover:underline transition-colors">
@@ -115,39 +152,43 @@
             </a>
           </div>
         {:else}
-          <div class="font-mono text-[10px] text-[#f0ede8]/25 uppercase tracking-widest mb-3">Progress</div>
-          <div class="font-serif italic text-3xl text-[#f0ede8] mb-1">{percent}%</div>
-          <div class="font-mono text-[10px] text-[#f0ede8]/30 mb-3">
+          <!-- In-progress state -->
+          <div class="font-mono text-[10px] uppercase tracking-widest mb-3" style="color: var(--text-faint)">
+            Progress
+          </div>
+          <div class="font-serif italic text-3xl mb-1" style="color: var(--text)">{percent}%</div>
+          <div class="font-mono text-[10px] mb-3" style="color: var(--text-faint)">
             {completedCount}/{totalCount} modules
           </div>
-          <div class="w-full h-[3px] bg-white/6 rounded-full">
-            <div
-              class="h-full bg-[#FF3E00] rounded-full transition-all"
-              style="width: {percent}%"
-            ></div>
+          <!-- Progress bar -->
+          <div class="w-full h-[3px] rounded-full" style="background: var(--surface2)">
+            <div class="h-full bg-[#FF3E00] rounded-full transition-all" style="width: {percent}%"></div>
           </div>
         {/if}
       </div>
     </div>
 
-    <!-- Exam attempts -->
+    <!-- ── Exam history ──────────────────────────────────────────────────── -->
     {#if attempts.length > 0}
-      <div class="bg-[#1c1c1c] border border-white/8 rounded-xl p-5 mb-8">
-        <div class="font-mono text-[10px] text-[#f0ede8]/25 uppercase tracking-widest mb-3">
+      <div class="rounded-xl p-5 mb-8" style="background: var(--surface); border: 1px solid var(--border)">
+        <div class="font-mono text-[10px] uppercase tracking-widest mb-3" style="color: var(--text-faint)">
           Exam history
         </div>
         <div class="flex flex-col gap-2">
           {#each attempts as attempt (attempt.taken_at)}
             <div class="flex items-center justify-between">
-              <span class="text-[#f0ede8]/40 text-xs font-light">
-                {new Date((attempt as unknown as { taken_at: string }).taken_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              <span class="text-xs font-light" style="color: var(--text-muted)">
+                {new Date((attempt as unknown as { taken_at: string }).taken_at)
+                  .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
               <div class="flex items-center gap-3">
-                <span class="font-mono text-[11px] text-[#f0ede8]/50">{attempt.score}%</span>
+                <span class="font-mono text-[11px]" style="color: var(--text-muted)">{attempt.score}%</span>
                 {#if attempt.passed}
-                  <span class="font-mono text-[9px] bg-[#FF3E00]/12 text-[#FF3E00] px-2 py-0.5 rounded-full">Passed</span>
+                  <span class="font-mono text-[9px] text-[#FF3E00] px-2 py-0.5 rounded-full"
+                    style="background: var(--orange-muted)">Passed</span>
                 {:else}
-                  <span class="font-mono text-[9px] bg-white/5 text-[#f0ede8]/30 px-2 py-0.5 rounded-full">Failed</span>
+                  <span class="font-mono text-[9px] px-2 py-0.5 rounded-full"
+                    style="background: var(--surface2); color: var(--text-faint)">Failed</span>
                 {/if}
               </div>
             </div>
@@ -156,13 +197,17 @@
       </div>
     {/if}
 
-    <!-- Certificate banner — shown when cert exists -->
+    <!-- ── Action banners ────────────────────────────────────────────────── -->
+
     {#if certificate}
-      <div class="bg-[#FF3E00]/[0.06] border border-[#FF3E00]/20 rounded-xl p-6 mb-8 flex items-center justify-between gap-6">
+      <!-- Certificate earned banner -->
+      <div class="rounded-xl p-6 mb-8 flex items-center justify-between gap-6"
+        style="background: var(--orange-faint); border: 1px solid rgba(255,62,0,0.2)">
         <div>
           <div class="font-mono text-[10px] text-[#FF3E00] tracking-widest uppercase mb-1">Certificate earned</div>
-          <p class="text-[#f0ede8]/60 text-sm font-light">
-            You completed this track on {new Date((certificate as unknown as { issued_at: string }).issued_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
+          <p class="text-sm font-light" style="color: var(--text-muted)">
+            You completed this track on {new Date((certificate as unknown as { issued_at: string }).issued_at)
+              .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
           </p>
         </div>
         <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
@@ -171,12 +216,13 @@
         </a>
       </div>
 
-    <!-- Take exam CTA — only when truly ready and haven't passed yet -->
     {:else if readyForExam}
-      <div class="bg-[#FF3E00]/[0.06] border border-[#FF3E00]/20 rounded-xl p-6 mb-8 flex items-center justify-between gap-6">
+      <!-- Ready for final exam banner -->
+      <div class="rounded-xl p-6 mb-8 flex items-center justify-between gap-6"
+        style="background: var(--orange-faint); border: 1px solid rgba(255,62,0,0.2)">
         <div>
           <div class="font-mono text-[10px] text-[#FF3E00] tracking-widest uppercase mb-1">Ready to certify</div>
-          <p class="text-[#f0ede8]/60 text-sm font-light">
+          <p class="text-sm font-light" style="color: var(--text-muted)">
             All modules and quizzes complete. Take the final exam to earn your certificate.
           </p>
         </div>
@@ -187,24 +233,28 @@
       </div>
 
     {:else if allModulesDone && !allPartsPassed}
-      <!-- Modules done but quizzes not all passed yet -->
-      <div class="bg-white/[0.02] border border-white/8 rounded-xl p-6 mb-8 flex items-center justify-between gap-6">
+      <!-- All modules done but some part quizzes still pending -->
+      <div class="rounded-xl p-6 mb-8 flex items-center justify-between gap-6"
+        style="background: var(--surface); border: 1px solid var(--border)">
         <div>
-          <div class="font-mono text-[10px] text-[#f0ede8]/30 tracking-widest uppercase mb-1">Almost there</div>
-          <p class="text-[#f0ede8]/40 text-sm font-light">
+          <div class="font-mono text-[10px] uppercase tracking-widest mb-1" style="color: var(--text-faint)">
+            Almost there
+          </div>
+          <p class="text-sm font-light" style="color: var(--text-muted)">
             All modules complete. Pass all 4 part quizzes to unlock the final exam.
           </p>
         </div>
+        <!-- Part quiz progress indicators -->
         <div class="flex gap-2 flex-shrink-0">
           {#each [1, 2, 3, 4] as pi (pi)}
-            <div class="w-6 h-6 rounded flex items-center justify-center
-              {isPartQuizPassed(pi) ? 'bg-[#FF3E00]/20' : 'bg-white/6'}">
+            <div class="w-6 h-6 rounded flex items-center justify-center"
+              style="background: {isPartQuizPassed(pi) ? 'var(--orange-muted)' : 'var(--surface2)'}">
               {#if isPartQuizPassed(pi)}
                 <svg class="w-3 h-3 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
               {:else}
-                <span class="font-mono text-[8px] text-[#f0ede8]/20">{pi}</span>
+                <span class="font-mono text-[8px]" style="color: var(--text-faint)">{pi}</span>
               {/if}
             </div>
           {/each}
@@ -212,8 +262,9 @@
       </div>
 
     {:else if nextModule}
+      <!-- Default: continue / start CTA -->
       <div class="mb-8 flex items-center justify-between">
-        <p class="text-[#f0ede8]/30 text-sm font-light">
+        <p class="text-sm font-light" style="color: var(--text-faint)">
           {completedCount === 0 ? 'Start with the first module below' : 'Continue where you left off'}
         </p>
         <a rel="external" href="/tracks/{track.slug}/modules/{nextModule.slug}"
@@ -223,101 +274,136 @@
       </div>
     {/if}
 
-    <!-- Module list — grouped by part -->
+    <!-- ── Module list grouped by part ──────────────────────────────────── -->
     <div class="flex flex-col gap-6">
       {#each [1, 2, 3, 4] as pIdx (pIdx)}
-        {@const pModules = getPartModules(pIdx)}
+        {@const pModules      = getPartModules(pIdx)}
         {#if pModules.length > 0}
-          {@const quizPassed = isPartQuizPassed(pIdx)}
+          {@const quizPassed    = isPartQuizPassed(pIdx)}
           {@const partDoneCount = pModules.filter((m: { id: number }) => isCompleted(m.id)).length}
 
-          <!-- Part header -->
           <div>
+            <!-- Part header row -->
             <div class="flex items-center justify-between mb-2 px-1">
               <div class="flex items-center gap-2">
                 <span class="font-mono text-[9px] text-[#FF3E00]/60 tracking-[2px] uppercase">Part {pIdx}</span>
-                <span class="font-mono text-[9px] text-[#f0ede8]/20">— {partLabels[pIdx]}</span>
+                <span class="font-mono text-[9px]" style="color: var(--text-faint)">— {partLabels[pIdx]}</span>
               </div>
               {#if quizPassed}
-                <span class="font-mono text-[8px] text-[#FF3E00] bg-[#FF3E00]/10 px-1.5 py-0.5 rounded tracking-widest">✓ Quiz passed</span>
+                <span class="font-mono text-[8px] text-[#FF3E00] px-1.5 py-0.5 rounded tracking-widest"
+                  style="background: var(--orange-faint)">✓ Quiz passed</span>
               {:else}
-                <span class="font-mono text-[8px] text-[#f0ede8]/20">{partDoneCount}/{pModules.length}</span>
+                <span class="font-mono text-[8px]" style="color: var(--text-faint)">
+                  {partDoneCount}/{pModules.length}
+                </span>
               {/if}
             </div>
 
-            <!-- Modules -->
+            <!-- Module rows -->
             <div class="flex flex-col gap-2">
               {#each pModules as module (module.id)}
                 {@const completed = isCompleted(module.id)}
-                {@const isNext = nextModule?.id === module.id}
+                {@const isNext    = nextModule?.id === module.id}
+
+                <!--
+                  Module row — three visual states:
+                    completed → normal surface
+                    isNext    → subtle orange tint (current focus)
+                    neither   → dimmed, lower opacity
+                -->
                 <a rel="external" href="/tracks/{track.slug}/modules/{module.slug}"
-                  class="flex items-center gap-5 p-5 rounded-xl border transition-all group
-                    {completed
-                      ? 'bg-[#1c1c1c] border-white/8 hover:border-white/12'
+                  class="flex items-center gap-5 p-5 rounded-xl transition-all group"
+                  class:opacity-60={!completed && !isNext}
+                  style="
+                    background: {isNext ? 'var(--orange-faint)' : 'var(--surface)'};
+                    border: 1px solid {completed
+                      ? 'var(--border)'
                       : isNext
-                      ? 'bg-[#FF3E00]/[0.04] border-[#FF3E00]/20 hover:border-[#FF3E00]/30'
-                      : 'bg-[#1c1c1c] border-white/5 opacity-60 hover:opacity-80 hover:border-white/10'}">
-                  <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
-                    {completed ? 'bg-[#FF3E00]/15' : isNext ? 'bg-[#FF3E00]/10' : 'bg-white/4'}">
+                      ? 'rgba(255,62,0,0.2)'
+                      : 'var(--border)'};
+                  "
+                >
+                  <!-- Module icon: checkmark if done, padded index if not -->
+                  <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                    style="background: {completed ? 'var(--orange-muted)' : isNext ? 'var(--orange-faint)' : 'var(--surface2)'}">
                     {#if completed}
                       <svg class="w-4 h-4 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M20 6L9 17l-5-5"/>
                       </svg>
                     {:else}
-                      <span class="font-mono text-[10px] text-[#f0ede8]/30">{String(module.order_index).padStart(2, '0')}</span>
+                      <span class="font-mono text-[10px]" style="color: var(--text-faint)">
+                        {String(module.order_index).padStart(2, '0')}
+                      </span>
                     {/if}
                   </div>
+
+                  <!-- Module title + subtitle -->
                   <div class="flex-1 min-w-0">
-                    <div class="text-sm font-light text-[#f0ede8] {!completed && !isNext ? 'text-[#f0ede8]/40' : ''} group-hover:text-[#f0ede8] transition-colors">
+                    <div class="text-sm font-light transition-colors" style="color: var(--text)">
                       {module.title}
                     </div>
                     {#if isNext}
                       <div class="font-mono text-[9px] text-[#FF3E00] mt-0.5">Up next</div>
                     {:else if completed}
-                      <div class="font-mono text-[9px] text-[#f0ede8]/25 mt-0.5">Completed</div>
+                      <div class="font-mono text-[9px] mt-0.5" style="color: var(--text-faint)">Completed</div>
                     {/if}
                   </div>
-                  <svg class="w-4 h-4 text-[#f0ede8]/20 group-hover:text-[#f0ede8]/50 transition-colors flex-shrink-0"
+
+                  <!-- Chevron -->
+                  <svg class="w-4 h-4 flex-shrink-0 transition-colors" style="color: var(--text-faint)"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M9 18l6-6-6-6"/>
                   </svg>
                 </a>
               {/each}
 
-              <!-- Quiz row -->
+              <!-- Part quiz row — locked until all modules in part are done -->
               <a rel="external"
                 href={partDoneCount === pModules.length ? `/tracks/${track.slug}/part/${pIdx}/quiz` : '#'}
-                class="flex items-center gap-5 p-5 rounded-xl border transition-all group
-                  {quizPassed
-                    ? 'bg-[#1c1c1c] border-white/8 hover:border-white/12'
+                class="flex items-center gap-5 p-5 rounded-xl transition-all group"
+                class:opacity-40={partDoneCount < pModules.length}
+                class:pointer-events-none={partDoneCount < pModules.length}
+                style="
+                  background: {quizPassed ? 'var(--surface)' : partDoneCount === pModules.length ? 'var(--orange-faint)' : 'var(--surface)'};
+                  border: 1px solid {quizPassed
+                    ? 'var(--border)'
                     : partDoneCount === pModules.length
-                    ? 'bg-[#FF3E00]/[0.04] border-[#FF3E00]/20 hover:border-[#FF3E00]/30'
-                    : 'bg-[#1c1c1c] border-white/5 opacity-40 pointer-events-none'}">
-                <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
-                  {quizPassed ? 'bg-[#FF3E00]/15' : partDoneCount === pModules.length ? 'bg-[#FF3E00]/10' : 'bg-white/4'}">
+                    ? 'rgba(255,62,0,0.2)'
+                    : 'var(--border)'};
+                "
+              >
+                <!-- Quiz icon -->
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="background: {quizPassed ? 'var(--orange-muted)' : partDoneCount === pModules.length ? 'var(--orange-faint)' : 'var(--surface2)'}">
                   {#if quizPassed}
                     <svg class="w-4 h-4 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <path d="M20 6L9 17l-5-5"/>
                     </svg>
                   {:else}
-                    <svg class="w-4 h-4 {partDoneCount === pModules.length ? 'text-[#FF3E00]' : 'text-[#f0ede8]/20'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="w-4 h-4" style="color: {partDoneCount === pModules.length ? '#FF3E00' : 'var(--text-faint)'}"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M9 12h6M12 9v6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                   {/if}
                 </div>
+
+                <!-- Quiz label + subtitle -->
                 <div class="flex-1 min-w-0">
-                  <div class="text-sm font-light {quizPassed ? 'text-[#f0ede8]/40' : partDoneCount === pModules.length ? 'text-[#f0ede8]' : 'text-[#f0ede8]/20'} group-hover:text-[#f0ede8] transition-colors">
+                  <div class="text-sm font-light transition-colors"
+                    style="color: {quizPassed ? 'var(--text-faint)' : partDoneCount === pModules.length ? 'var(--text)' : 'var(--text-faint)'}">
                     Part {pIdx} Quiz
                   </div>
                   {#if quizPassed}
-                    <div class="font-mono text-[9px] text-[#f0ede8]/25 mt-0.5">Completed</div>
+                    <div class="font-mono text-[9px] mt-0.5" style="color: var(--text-faint)">Completed</div>
                   {:else if partDoneCount === pModules.length}
                     <div class="font-mono text-[9px] text-[#FF3E00] mt-0.5">Ready to take</div>
                   {:else}
-                    <div class="font-mono text-[9px] text-[#f0ede8]/20 mt-0.5">Complete all lessons first</div>
+                    <div class="font-mono text-[9px] mt-0.5" style="color: var(--text-faint)">Complete all lessons first</div>
                   {/if}
                 </div>
-                <svg class="w-4 h-4 text-[#f0ede8]/20 group-hover:text-[#f0ede8]/50 transition-colors flex-shrink-0"
+
+                <!-- Chevron -->
+                <svg class="w-4 h-4 flex-shrink-0 transition-colors" style="color: var(--text-faint)"
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
@@ -328,9 +414,9 @@
       {/each}
     </div>
 
-    <!-- Bottom note -->
+    <!-- ── Footer note ──────────────────────────────────────────────────── -->
     <div class="mt-10 text-center">
-      <p class="text-[#f0ede8]/20 text-xs font-mono">
+      <p class="text-xs font-mono" style="color: var(--text-faint)">
         Complete all modules in a track + pass all quizzes + final exam to earn your certificate
       </p>
     </div>
