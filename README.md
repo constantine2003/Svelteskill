@@ -118,7 +118,7 @@ Every certificate is permanently accessible at a public URL. No login required t
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/svelteskill.git
+git clone https://github.com/constantine2003/svelteskill.git
 cd svelteskill
 npm install
 ```
@@ -385,7 +385,7 @@ The **curriculum content** (lesson text, questions, and explanations) is license
 
 <br />
 
-Built with care by [Daniel Montesclaros](https://github.com/YOUR_USERNAME) &nbsp;·&nbsp; Cebu, Philippines 🇵🇭
+Built with care by [Daniel Montesclaros](https://github.com/constantine2003) &nbsp;·&nbsp; Cebu, Philippines 🇵🇭
 
 <br />
 
