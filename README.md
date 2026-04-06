@@ -2,10 +2,10 @@
 
 <br />
 
-<img src="static/favicon.png" alt="SvelteSkill" width="72" />
+<img src="static/svelteskill_logo.png" alt="SvelteSkill" width="100" />
 
 <br />
-<br />
+
 
 # SvelteSkill
 
@@ -23,7 +23,7 @@ Earn a certificate anyone can verify — at zero cost, forever.
 
 <br />
 
-**[svelteskill.dev](https://svelteskill.dev)** &nbsp;·&nbsp; [Report a Bug](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=bug&template=bug_report.md) &nbsp;·&nbsp; [Request a Feature](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=enhancement) &nbsp;·&nbsp; [Curriculum Feedback](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=curriculum)
+**[svelteskill.vercel.app](https://svelteskill.vercel.app/)** &nbsp;·&nbsp; [Report a Bug](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=bug&template=bug_report.md) &nbsp;·&nbsp; [Request a Feature](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=enhancement) &nbsp;·&nbsp; [Curriculum Feedback](https://github.com/YOUR_USERNAME/svelteskill/issues/new?labels=curriculum)
 
 <br />
 
