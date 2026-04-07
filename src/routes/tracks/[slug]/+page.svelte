@@ -99,11 +99,11 @@
 </svelte:head>
 
 <div class="min-h-screen" style="background: var(--bg)">
-  <main class="max-w-[900px] mx-auto px-4 sm:px-8 py-14">
+  <main class="max-w-[900px] mx-auto px-4 sm:px-8 py-10 sm:py-14">
 
     <!-- ── Back link ────────────────────────────────────────────────────── -->
     <a rel="external" href="/tracks"
-      class="inline-flex items-center gap-2 text-sm font-mono transition-colors mb-10"
+      class="inline-flex items-center gap-2 text-sm font-mono transition-colors mb-8 sm:mb-10"
       style="color: var(--text-faint)">
       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M19 12H5M12 5l-7 7 7 7"/>
@@ -112,7 +112,8 @@
     </a>
 
     <!-- ── Track header ─────────────────────────────────────────────────── -->
-    <div class="flex flex-col sm:flex-row items-start justify-between gap-8 mb-12">
+    <!-- Mobile: always column. Desktop (sm+): row with status card on the right. -->
+    <div class="flex flex-col gap-6 mb-10 sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:mb-12">
       <div class="flex-1">
         <div class="flex items-center gap-2.5 mb-4">
           <div class="w-4 h-px bg-[#FF3E00]"></div>
@@ -120,7 +121,7 @@
             Track {track.order_index} of 4
           </span>
         </div>
-        <h1 class="font-serif italic text-[clamp(28px,4vw,44px)] font-normal tracking-[-1.5px] mb-3"
+        <h1 class="font-serif italic text-[clamp(26px,6vw,44px)] font-normal tracking-[-1.5px] mb-3"
           style="color: var(--text)">
           {track.title}
         </h1>
@@ -129,39 +130,65 @@
         </p>
       </div>
 
-      <!-- Status card — shows certificate info or progress percentage -->
-      <div class="flex-shrink-0 rounded-xl p-6 min-w-[200px]"
+      <!-- Status card — full width on mobile, fixed-width sidebar on desktop -->
+      <div class="w-full sm:w-auto sm:flex-shrink-0 sm:min-w-[200px] rounded-xl p-4 sm:p-6"
         style="background: var(--surface); border: 1px solid var(--border)">
         {#if certificate}
           <!-- Certified state -->
-          <div class="text-center">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
+          <div class="flex items-center gap-4 sm:block sm:text-center">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 sm:mx-auto sm:mb-3"
               style="background: var(--orange-muted)">
               <svg class="w-5 h-5 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 15l-2 5-3-1-1 3-4-4 3-1-1-3 5-2"/><circle cx="12" cy="8" r="5"/>
               </svg>
             </div>
-            <div class="font-mono text-[9px] text-[#FF3E00] tracking-widest uppercase mb-1">Certified</div>
-            <div class="font-serif italic text-sm mb-4" style="color: var(--text-muted)">
-              {new Date((certificate as unknown as { issued_at: string }).issued_at)
-                .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            <div class="flex-1 sm:flex-none">
+              <div class="font-mono text-[9px] text-[#FF3E00] tracking-widest uppercase mb-1">Certified</div>
+              <div class="font-serif italic text-sm sm:mb-4" style="color: var(--text-muted)">
+                {new Date((certificate as unknown as { issued_at: string }).issued_at)
+                  .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
             </div>
             <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
-              class="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#FF3E00] hover:underline transition-colors">
-              View certificate →
+              class="font-mono text-[10px] text-[#FF3E00] hover:underline transition-colors flex-shrink-0 sm:hidden">
+              View →
             </a>
           </div>
+          <!-- Desktop-only "View certificate" link -->
+          <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
+            class="hidden sm:inline-flex items-center gap-1.5 font-mono text-[10px] text-[#FF3E00] hover:underline transition-colors">
+            View certificate →
+          </a>
         {:else}
-          <!-- In-progress state -->
-          <div class="font-mono text-[10px] uppercase tracking-widest mb-3" style="color: var(--text-faint)">
-            Progress
+          <!-- In-progress state — horizontal on mobile, vertical on desktop -->
+          <div class="flex items-center justify-between gap-4 sm:block">
+            <div>
+              <div class="font-mono text-[10px] uppercase tracking-widest mb-1 sm:mb-3" style="color: var(--text-faint)">
+                Progress
+              </div>
+              <div class="font-serif italic text-2xl sm:text-3xl mb-0.5 sm:mb-1" style="color: var(--text)">
+                {percent}%
+              </div>
+              <div class="font-mono text-[10px] sm:mb-3" style="color: var(--text-faint)">
+                {completedCount}/{totalCount} modules
+              </div>
+            </div>
+            <!-- Circular progress ring — visible on mobile, hidden on desktop -->
+            <svg class="flex-shrink-0 sm:hidden" width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="18" fill="none" stroke="var(--surface2)" stroke-width="4"/>
+              <circle cx="24" cy="24" r="18" fill="none" stroke="#FF3E00" stroke-width="4"
+                stroke-dasharray="{(percent / 100) * 113} 113"
+                stroke-linecap="round"
+                transform="rotate(-90 24 24)"
+                style="transition: stroke-dasharray 0.4s ease"/>
+            </svg>
           </div>
-          <div class="font-serif italic text-3xl mb-1" style="color: var(--text)">{percent}%</div>
-          <div class="font-mono text-[10px] mb-3" style="color: var(--text-faint)">
-            {completedCount}/{totalCount} modules
+          <!-- Progress bar — hidden on mobile (ring takes its place), shown on desktop -->
+          <div class="hidden sm:block w-full h-[3px] rounded-full" style="background: var(--surface2)">
+            <div class="h-full bg-[#FF3E00] rounded-full transition-all" style="width: {percent}%"></div>
           </div>
-          <!-- Progress bar -->
-          <div class="w-full h-[3px] rounded-full" style="background: var(--surface2)">
+          <!-- Mobile: slim bar below the row -->
+          <div class="mt-3 sm:hidden w-full h-[3px] rounded-full" style="background: var(--surface2)">
             <div class="h-full bg-[#FF3E00] rounded-full transition-all" style="width: {percent}%"></div>
           </div>
         {/if}
@@ -170,7 +197,7 @@
 
     <!-- ── Exam history ──────────────────────────────────────────────────── -->
     {#if attempts.length > 0}
-      <div class="rounded-xl p-5 mb-8" style="background: var(--surface); border: 1px solid var(--border)">
+      <div class="rounded-xl p-4 sm:p-5 mb-6 sm:mb-8" style="background: var(--surface); border: 1px solid var(--border)">
         <div class="font-mono text-[10px] uppercase tracking-widest mb-3" style="color: var(--text-faint)">
           Exam history
         </div>
@@ -181,7 +208,7 @@
                 {new Date((attempt as unknown as { taken_at: string }).taken_at)
                   .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2 sm:gap-3">
                 <span class="font-mono text-[11px]" style="color: var(--text-muted)">{attempt.score}%</span>
                 {#if attempt.passed}
                   <span class="font-mono text-[9px] text-[#FF3E00] px-2 py-0.5 rounded-full"
@@ -201,7 +228,7 @@
 
     {#if certificate}
       <!-- Certificate earned banner -->
-      <div class="rounded-xl p-6 mb-8 flex items-center justify-between gap-6"
+      <div class="rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
         style="background: var(--orange-faint); border: 1px solid rgba(255,62,0,0.2)">
         <div>
           <div class="font-mono text-[10px] text-[#FF3E00] tracking-widest uppercase mb-1">Certificate earned</div>
@@ -211,14 +238,14 @@
           </p>
         </div>
         <a rel="external" href="/verify/{(certificate as unknown as { id: string }).id}"
-          class="flex-shrink-0 inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all">
+          class="inline-flex items-center justify-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all w-full sm:w-auto sm:flex-shrink-0">
           View certificate →
         </a>
       </div>
 
     {:else if readyForExam}
       <!-- Ready for final exam banner -->
-      <div class="rounded-xl p-6 mb-8 flex items-center justify-between gap-6"
+      <div class="rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
         style="background: var(--orange-faint); border: 1px solid rgba(255,62,0,0.2)">
         <div>
           <div class="font-mono text-[10px] text-[#FF3E00] tracking-widest uppercase mb-1">Ready to certify</div>
@@ -227,14 +254,14 @@
           </p>
         </div>
         <a rel="external" href="/tracks/{track.slug}/exam"
-          class="flex-shrink-0 inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all">
+          class="inline-flex items-center justify-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all w-full sm:w-auto sm:flex-shrink-0">
           Take exam →
         </a>
       </div>
 
     {:else if allModulesDone && !allPartsPassed}
       <!-- All modules done but some part quizzes still pending -->
-      <div class="rounded-xl p-6 mb-8 flex items-center justify-between gap-6"
+      <div class="rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
         style="background: var(--surface); border: 1px solid var(--border)">
         <div>
           <div class="font-mono text-[10px] uppercase tracking-widest mb-1" style="color: var(--text-faint)">
@@ -245,16 +272,16 @@
           </p>
         </div>
         <!-- Part quiz progress indicators -->
-        <div class="flex gap-2 flex-shrink-0">
+        <div class="flex gap-2 sm:flex-shrink-0">
           {#each [1, 2, 3, 4] as pi (pi)}
-            <div class="w-6 h-6 rounded flex items-center justify-center"
+            <div class="w-7 h-7 sm:w-6 sm:h-6 rounded flex items-center justify-center"
               style="background: {isPartQuizPassed(pi) ? 'var(--orange-muted)' : 'var(--surface2)'}">
               {#if isPartQuizPassed(pi)}
-                <svg class="w-3 h-3 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg class="w-3.5 h-3.5 text-[#FF3E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
               {:else}
-                <span class="font-mono text-[8px]" style="color: var(--text-faint)">{pi}</span>
+                <span class="font-mono text-[9px]" style="color: var(--text-faint)">{pi}</span>
               {/if}
             </div>
           {/each}
@@ -263,19 +290,19 @@
 
     {:else if nextModule}
       <!-- Default: continue / start CTA -->
-      <div class="mb-8 flex items-center justify-between">
+      <div class="mb-6 sm:mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm font-light" style="color: var(--text-faint)">
           {completedCount === 0 ? 'Start with the first module below' : 'Continue where you left off'}
         </p>
         <a rel="external" href="/tracks/{track.slug}/modules/{nextModule.slug}"
-          class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-all">
+          class="inline-flex items-center justify-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-all w-full sm:w-auto">
           {completedCount === 0 ? 'Start track' : 'Continue'} →
         </a>
       </div>
     {/if}
 
     <!-- ── Module list grouped by part ──────────────────────────────────── -->
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-5 sm:gap-6">
       {#each [1, 2, 3, 4] as pIdx (pIdx)}
         {@const pModules      = getPartModules(pIdx)}
         {#if pModules.length > 0}
@@ -285,15 +312,20 @@
           <div>
             <!-- Part header row -->
             <div class="flex items-center justify-between mb-2 px-1">
-              <div class="flex items-center gap-2">
-                <span class="font-mono text-[9px] text-[#FF3E00]/60 tracking-[2px] uppercase">Part {pIdx}</span>
-                <span class="font-mono text-[9px]" style="color: var(--text-faint)">— {partLabels[pIdx]}</span>
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="font-mono text-[9px] text-[#FF3E00]/60 tracking-[2px] uppercase flex-shrink-0">
+                  Part {pIdx}
+                </span>
+                <!-- Part label truncates on very narrow screens -->
+                <span class="font-mono text-[9px] truncate" style="color: var(--text-faint)">
+                  — {partLabels[pIdx]}
+                </span>
               </div>
               {#if quizPassed}
-                <span class="font-mono text-[8px] text-[#FF3E00] px-1.5 py-0.5 rounded tracking-widest"
+                <span class="font-mono text-[8px] text-[#FF3E00] px-1.5 py-0.5 rounded tracking-widest flex-shrink-0 ml-2"
                   style="background: var(--orange-faint)">✓ Quiz passed</span>
               {:else}
-                <span class="font-mono text-[8px]" style="color: var(--text-faint)">
+                <span class="font-mono text-[8px] flex-shrink-0 ml-2" style="color: var(--text-faint)">
                   {partDoneCount}/{pModules.length}
                 </span>
               {/if}
@@ -305,14 +337,8 @@
                 {@const completed = isCompleted(module.id)}
                 {@const isNext    = nextModule?.id === module.id}
 
-                <!--
-                  Module row — three visual states:
-                    completed → normal surface
-                    isNext    → subtle orange tint (current focus)
-                    neither   → dimmed, lower opacity
-                -->
                 <a rel="external" href="/tracks/{track.slug}/modules/{module.slug}"
-                  class="flex items-center gap-5 p-5 rounded-xl transition-all group"
+                  class="flex items-center gap-3 sm:gap-5 p-3.5 sm:p-5 rounded-xl transition-all group"
                   class:opacity-60={!completed && !isNext}
                   style="
                     background: {isNext ? 'var(--orange-faint)' : 'var(--surface)'};
@@ -323,7 +349,7 @@
                       : 'var(--border)'};
                   "
                 >
-                  <!-- Module icon: checkmark if done, padded index if not -->
+                  <!-- Module icon -->
                   <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                     style="background: {completed ? 'var(--orange-muted)' : isNext ? 'var(--orange-faint)' : 'var(--surface2)'}">
                     {#if completed}
@@ -339,7 +365,7 @@
 
                   <!-- Module title + subtitle -->
                   <div class="flex-1 min-w-0">
-                    <div class="text-sm font-light transition-colors" style="color: var(--text)">
+                    <div class="text-sm font-light transition-colors leading-snug" style="color: var(--text)">
                       {module.title}
                     </div>
                     {#if isNext}
@@ -360,7 +386,7 @@
               <!-- Part quiz row — locked until all modules in part are done -->
               <a rel="external"
                 href={partDoneCount === pModules.length ? `/tracks/${track.slug}/part/${pIdx}/quiz` : '#'}
-                class="flex items-center gap-5 p-5 rounded-xl transition-all group"
+                class="flex items-center gap-3 sm:gap-5 p-3.5 sm:p-5 rounded-xl transition-all group"
                 class:opacity-40={partDoneCount < pModules.length}
                 class:pointer-events-none={partDoneCount < pModules.length}
                 style="
@@ -389,7 +415,7 @@
 
                 <!-- Quiz label + subtitle -->
                 <div class="flex-1 min-w-0">
-                  <div class="text-sm font-light transition-colors"
+                  <div class="text-sm font-light transition-colors leading-snug"
                     style="color: {quizPassed ? 'var(--text-faint)' : partDoneCount === pModules.length ? 'var(--text)' : 'var(--text-faint)'}">
                     Part {pIdx} Quiz
                   </div>
@@ -415,8 +441,8 @@
     </div>
 
     <!-- ── Footer note ──────────────────────────────────────────────────── -->
-    <div class="mt-10 text-center">
-      <p class="text-xs font-mono" style="color: var(--text-faint)">
+    <div class="mt-10 text-center px-4">
+      <p class="text-xs font-mono leading-relaxed" style="color: var(--text-faint)">
         Complete all modules in a track + pass all quizzes + final exam to earn your certificate
       </p>
     </div>

@@ -106,6 +106,10 @@
     'sveltekit':           { icon: 'grid', color: '#FF3E00' },
     'svelte-advanced':     { icon: 'bulb', color: '#FF3E00' },
     'svelte-typescript':   { icon: 'code', color: '#FF3E00' }
+    'svelte-fundamentals': { icon: 'bolt',  color: '#FF3E00' },
+    'sveltekit':           { icon: 'grid',  color: '#FF3E00' },
+    'svelte-advanced':     { icon: 'bulb',  color: '#FF3E00' },
+    'svelte-typescript':   { icon: 'code',  color: '#FF3E00' }
   };
 </script>
 
@@ -114,16 +118,19 @@
 </svelte:head>
 
 <div class="min-h-screen" style="background: var(--bg)">
-  <main class="max-w-[1100px] mx-auto px-4 sm:px-8 py-14">
+  <main class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
 
     <!-- ── Page header ──────────────────────────────────────────────────── -->
-    <div class="mb-14">
+    <div class="mb-10 sm:mb-14">
       <div class="flex items-center gap-2.5 mb-4">
         <div class="w-4 h-px bg-[#FF3E00]"></div>
         <span class="font-mono text-[10px] text-[#FF3E00] tracking-[2px] uppercase">Curriculum</span>
       </div>
-      <h1 class="font-serif italic text-[clamp(32px,4vw,48px)] font-normal tracking-[-1.5px] mb-3"
-        style="color: var(--text)">
+      <!-- clamp() keeps the heading readable on both small phones and wide desktop -->
+      <h1
+        class="font-serif italic font-normal tracking-[-1.5px] mb-3"
+        style="font-size: clamp(26px, 5vw, 48px); color: var(--text)"
+      >
         Your learning path
       </h1>
       <p class="text-sm font-light max-w-md" style="color: var(--text-muted)">
@@ -150,6 +157,12 @@
             certified  → orange-tinted border + subtle orange bg
             unlocked   → normal surface, hover lifts border opacity
             locked     → dimmed to 50% opacity
+
+          Mobile layout note: the original horizontal three-column layout
+          (number/icon | content | CTA) is replaced with a stacked vertical
+          layout. The number/icon shares a row with the title/badge; stats,
+          progress, and CTA each live in their own row below, indented to
+          align with the title column (pl-14 sm:pl-16).
         -->
         <div
           class="rounded-xl overflow-hidden transition-all duration-200"
@@ -158,8 +171,6 @@
             background: var(--surface);
             border: 1px solid {cert
               ? 'rgba(255,62,0,0.25)'
-              : unlocked
-              ? 'var(--border)'
               : 'var(--border)'};
           "
         >
@@ -168,117 +179,131 @@
             <div class="h-[2px] bg-gradient-to-r from-[#FF3E00] to-[#FF3E00]/10"></div>
           {/if}
 
-          <div class="p-6 sm:p-8 flex items-center gap-6 sm:gap-8">
+          <!-- Reduced padding on mobile (p-5), roomier on sm+ (p-8) -->
+          <div class="p-5 sm:p-8">
 
-            <!-- ── Track number + icon ─────────────────────────────────── -->
-            <div class="flex-shrink-0 flex flex-col items-center gap-3">
-              <!-- Zero-padded track index -->
-              <div class="font-mono text-[11px] tracking-widest" style="color: var(--text-faint)">
-                0{i + 1}
+            <!-- ── Top row: number + icon + title + badge ──────────────── -->
+            <div class="flex items-start gap-4 mb-4">
+
+              <!-- Track number + icon -->
+              <div class="flex-shrink-0 flex flex-col items-center gap-2 pt-0.5">
+                <!-- Zero-padded track index -->
+                <div class="font-mono text-[10px] tracking-widest" style="color: var(--text-faint)">
+                  0{i + 1}
+                </div>
+
+                <!-- Icon container — slightly smaller on mobile (w-10/h-10) -->
+                <div
+                  class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                  style="background: {cert ? 'var(--orange-muted)' : 'var(--surface2)'}"
+                >
+                  {#if meta.icon === 'bolt'}
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                  {:else if meta.icon === 'grid'}
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                  {:else if meta.icon === 'bulb'}
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                  {:else}
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                    </svg>
+                  {/if}
+                </div>
               </div>
 
-              <!-- Icon container — bg tint depends on state -->
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center"
-                style="background: {cert ? 'var(--orange-muted)' : 'var(--surface2)'}"
-              >
-                {#if meta.icon === 'bolt'}
-                  <svg class="w-5 h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                {:else if meta.icon === 'grid'}
-                  <svg class="w-5 h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                  </svg>
-                {:else if meta.icon === 'bulb'}
-                  <svg class="w-5 h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                  </svg>
-                {:else}
-                  <svg class="w-5 h-5" style="color: {unlocked ? '#FF3E00' : 'var(--text-faint)'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                  </svg>
-                {/if}
+              <!-- Title + badge -->
+              <div class="flex-1 min-w-0">
+                <!--
+                  flex-wrap lets the badge drop below the title on very narrow
+                  screens rather than squishing both into one line
+                -->
+                <div class="flex items-start justify-between gap-2 flex-wrap">
+                  <!-- clamp() scales the title smoothly across breakpoints -->
+                  <h2
+                    class="font-serif italic font-normal leading-snug"
+                    style="font-size: clamp(16px, 3vw, 20px); color: {unlocked ? 'var(--text)' : 'var(--text-faint)'}"
+                  >
+                    {track.title}
+                  </h2>
+
+                  <!--
+                    Status badge — four mutually exclusive states:
+                    certified > locked > in-progress > not started
+                  -->
+                  {#if cert}
+                    <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full text-[#FF3E00]"
+                      style="background: var(--orange-muted)">
+                      ● Certified
+                    </span>
+                  {:else if !unlocked}
+                    <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full"
+                      style="background: var(--surface2); color: var(--text-faint)">
+                      Locked
+                    </span>
+                  {:else if completedCount > 0}
+                    <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full"
+                      style="background: var(--surface2); color: var(--text-muted)">
+                      In progress
+                    </span>
+                  {:else}
+                    <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full"
+                      style="background: var(--surface2); color: var(--text-faint)">
+                      Not started
+                    </span>
+                  {/if}
+                </div>
+
+                <!-- Track description -->
+                <p class="text-sm font-light leading-relaxed mt-1.5" style="color: var(--text-muted)">
+                  {track.description}
+                </p>
               </div>
             </div>
 
-            <!-- ── Main content ────────────────────────────────────────── -->
-            <div class="flex-1 min-w-0">
-
-              <!-- Title row + status badge -->
-              <div class="flex items-start justify-between gap-4 mb-2">
-                <h2
-                  class="font-serif italic text-xl font-normal"
-                  style="color: {unlocked ? 'var(--text)' : 'var(--text-faint)'}"
-                >
-                  {track.title}
-                </h2>
-
-                <!--
-                  Status badge — four mutually exclusive states:
-                  certified > locked > in-progress > not started
-                -->
-                {#if cert}
-                  <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full text-[#FF3E00]"
-                    style="background: var(--orange-muted)">
-                    ● Certified
-                  </span>
-                {:else if !unlocked}
-                  <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full"
-                    style="background: var(--surface2); color: var(--text-faint)">
-                    Locked
-                  </span>
-                {:else if completedCount > 0}
-                  <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full"
-                    style="background: var(--surface2); color: var(--text-muted)">
-                    In progress
-                  </span>
-                {:else}
-                  <span class="flex-shrink-0 font-mono text-[9px] tracking-widest uppercase px-2.5 py-1 rounded-full"
-                    style="background: var(--surface2); color: var(--text-faint)">
-                    Not started
-                  </span>
-                {/if}
-              </div>
-
-              <!-- Track description -->
-              <p class="text-sm font-light leading-relaxed mb-4 max-w-xl" style="color: var(--text-muted)">
-                {track.description}
-              </p>
-
-              <!-- Stats row: module count, attempt count, cert date -->
-              <div class="flex items-center gap-6 mb-4">
+            <!-- Stats row: module count, attempt count, cert date -->
+            <!-- pl-14/pl-16 keeps stats visually aligned under the title -->
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-1 mb-3 pl-14 sm:pl-16">
+              <span class="font-mono text-[10px]" style="color: var(--text-faint)">
+                {moduleCount > 0 ? `${completedCount}/${moduleCount} modules` : 'No modules yet'}
+              </span>
+              {#if trackAttempts.length > 0}
                 <span class="font-mono text-[10px]" style="color: var(--text-faint)">
-                  {moduleCount > 0 ? `${completedCount}/${moduleCount} modules` : 'No modules yet'}
+                  {trackAttempts.length} exam attempt{trackAttempts.length > 1 ? 's' : ''}
                 </span>
-                {#if trackAttempts.length > 0}
-                  <span class="font-mono text-[10px]" style="color: var(--text-faint)">
-                    {trackAttempts.length} exam attempt{trackAttempts.length > 1 ? 's' : ''}
-                  </span>
-                {/if}
-                {#if cert}
-                  <span class="font-mono text-[10px] text-[#FF3E00]/70">
-                    {formatDate(cert.issued_at)}
-                  </span>
-                {/if}
-              </div>
-
-              <!-- Progress bar — only shown for unlocked, incomplete tracks -->
-              {#if unlocked && moduleCount > 0 && !cert}
-                <div class="flex items-center gap-3 max-w-xs">
-                  <div class="flex-1 h-[3px] rounded-full" style="background: var(--surface2)">
-                    <div
-                      class="h-full bg-[#FF3E00] rounded-full transition-all"
-                      style="width: {percent}%"
-                    ></div>
-                  </div>
-                  <span class="font-mono text-[10px]" style="color: var(--text-faint)">{percent}%</span>
-                </div>
+              {/if}
+              {#if cert}
+                <span class="font-mono text-[10px] text-[#FF3E00]/70">
+                  {formatDate(cert.issued_at)}
+                </span>
               {/if}
             </div>
 
+            <!-- Progress bar — only shown for unlocked, incomplete tracks -->
+            {#if unlocked && moduleCount > 0 && !cert}
+              <div class="flex items-center gap-3 pl-14 sm:pl-16 max-w-sm mb-4">
+                <div class="flex-1 h-[3px] rounded-full" style="background: var(--surface2)">
+                  <div
+                    class="h-full bg-[#FF3E00] rounded-full transition-all"
+                    style="width: {percent}%"
+                  ></div>
+                </div>
+                <span class="font-mono text-[10px]" style="color: var(--text-faint)">{percent}%</span>
+              </div>
+            {/if}
+
             <!-- ── CTA button ───────────────────────────────────────────── -->
-            <div class="flex-shrink-0">
+            <!--
+              On mobile the Start/Continue button stretches full width (w-full)
+              for a larger tap target; sm:w-auto restores inline sizing on
+              larger screens. active:scale-[0.98] gives tactile tap feedback.
+            -->
+            <div class="pl-14 sm:pl-16">
               {#if cert}
                 <!-- Certified: text link to view the track -->
                 <a rel="external" href="/tracks/{track.slug}"
@@ -286,9 +311,18 @@
                   View track →
                 </a>
               {:else if unlocked}
-                <!-- Unlocked: solid orange CTA -->
+                <!-- Unlocked: solid orange CTA, full-width on mobile -->
                 <a rel="external" href="/tracks/{track.slug}"
-                  class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-[13px] px-4 py-2 rounded-lg transition-all">
+                  class="
+                    inline-flex items-center justify-center gap-2
+                    w-full sm:w-auto
+                    bg-[#FF3E00] hover:brightness-110
+                    text-white font-semibold text-[13px]
+                    px-5 py-2.5 sm:py-2
+                    rounded-lg transition-all
+                    active:scale-[0.98]
+                  "
+                >
                   {completedCount > 0 ? 'Continue' : 'Start'} →
                 </a>
               {:else}
@@ -309,8 +343,8 @@
     </div>
 
     <!-- ── Footer note ──────────────────────────────────────────────────── -->
-    <div class="mt-10 text-center">
-      <p class="text-xs font-mono" style="color: var(--text-faint)">
+    <div class="mt-10 text-center px-4">
+      <p class="text-xs font-mono leading-relaxed" style="color: var(--text-faint)">
         Complete all modules in a track + pass the final exam to earn your certificate
       </p>
     </div>
