@@ -102,10 +102,6 @@
    * added to the DB won't break the UI before this map is updated.
    */
   const trackMeta: Record<string, { icon: string; color: string }> = {
-    'svelte-fundamentals': { icon: 'bolt', color: '#FF3E00' },
-    'sveltekit':           { icon: 'grid', color: '#FF3E00' },
-    'svelte-advanced':     { icon: 'bulb', color: '#FF3E00' },
-    'svelte-typescript':   { icon: 'code', color: '#FF3E00' }
     'svelte-fundamentals': { icon: 'bolt',  color: '#FF3E00' },
     'sveltekit':           { icon: 'grid',  color: '#FF3E00' },
     'svelte-advanced':     { icon: 'bulb',  color: '#FF3E00' },
