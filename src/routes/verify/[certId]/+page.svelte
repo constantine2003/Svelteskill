@@ -118,138 +118,146 @@
              A subtle shadow separates it from the page background.
         ─────────────────────────────────────────────────────────────── -->
         <div
-          bind:this={certEl}
-          class="relative border border-[#c9a84c]"
-          style="background: #faf7f2; aspect-ratio: 1.414 / 1; box-shadow: 0 4px 40px rgba(0,0,0,0.15);"
-        >
+        bind:this={certEl}
+        class="relative border border-[#c9a84c]"
+        style="background: #faf7f2; aspect-ratio: 1.414 / 1; box-shadow: 0 4px 40px rgba(0,0,0,0.15); container-type: inline-size;"
+      >
 
-          <!-- Corner ornaments -->
-          {#each [
-            'top-1.5 left-1.5',
-            'top-1.5 right-1.5 -scale-x-100',
-            'bottom-1.5 left-1.5 -scale-y-100',
-            'bottom-1.5 right-1.5 scale-[-1]'
-          ] as pos (pos)}
-            <svg class="absolute {pos} w-7 h-7 opacity-60" viewBox="0 0 40 40" fill="none">
-              <path d="M2 2 L12 2 M2 2 L2 12" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M14 2 Q20 8 14 14 Q8 20 2 14" stroke="#c9a84c" stroke-width="0.75" fill="none"/>
-              <circle cx="7" cy="7" r="2" fill="#c9a84c"/>
-            </svg>
-          {/each}
+        <!-- Corner ornaments -->
+        {#each [
+          'top-1.5 left-1.5',
+          'top-1.5 right-1.5 -scale-x-100',
+          'bottom-1.5 left-1.5 -scale-y-100',
+          'bottom-1.5 right-1.5 scale-[-1]'
+        ] as pos (pos)}
+          <svg class="absolute {pos} opacity-60" style="width: 4cqi; height: 4cqi" viewBox="0 0 40 40" fill="none">
+            <path d="M2 2 L12 2 M2 2 L2 12" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M14 2 Q20 8 14 14 Q8 20 2 14" stroke="#c9a84c" stroke-width="0.75" fill="none"/>
+            <circle cx="7" cy="7" r="2" fill="#c9a84c"/>
+          </svg>
+        {/each}
 
-          <!-- Inner border -->
-          <div class="absolute inset-3 border border-[#c9a84c]/50 flex flex-col justify-between px-12 py-6">
+        <!-- Inner border -->
+        <div class="absolute flex flex-col justify-between"
+          style="inset: 3cqi; border: 1px solid rgba(201,168,76,0.5); padding: 3cqi 5cqi;">
 
-            <!-- TOP SECTION -->
-            <div>
-              <!-- Header row -->
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 bg-white border border-[#c9a84c]/30 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    <img src="/svelteskill_logo.png" alt="SvelteSkill Logo" class="w-full h-full object-contain" crossorigin="anonymous" />
-                  </div>
-                  <span class="font-mono text-[12px] tracking-widest text-[#1a1a1a]" style="line-height:1;">SvelteSkill</span>
-                </div>
-                <span class="font-mono text-[9px] text-[#1a1a1a]/35 tracking-wide" style="line-height:1;">{formattedDate}</span>
+          <!-- TOP SECTION -->
+          <div>
+            <!-- Header row -->
+            <div class="flex items-center justify-between" style="margin-bottom: 2cqi">
+              <div class="flex items-center" style="gap: 1.5cqi">
+                <img src="/svelteskill_logo.png" alt="SvelteSkill Logo"
+                  style="width: 5cqi; height: 5cqi; border: 1px solid rgba(201,168,76,0.3)"
+                  class="object-contain flex-shrink-0 rounded"
+                  crossorigin="anonymous" />
+                <span class="font-mono tracking-widest text-[#1a1a1a]" style="font-size: 1.5cqi; line-height: 1">SvelteSkill</span>
               </div>
-
-              <div class="h-px bg-[#c9a84c]/35 mb-4"></div>
-
-              <!-- Wax seal -->
-              <div class="flex justify-center mb-2.5">
-                <div class="relative w-12 h-12 rounded-full bg-[#faf7f2] border-2 border-[#c9a84c] flex items-center justify-center">
-                  <div class="absolute inset-[2px] rounded-full border border-dashed border-[#c9a84c]/60"></div>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c"/>
-                  </svg>
-                </div>
-              </div>
-
-              <div class="text-center font-mono text-[8px] tracking-[3px] uppercase text-[#c9a84c] mb-2">
-                Certificate of Completion
-              </div>
-
-              <div class="text-center font-serif italic text-[22px] text-[#1a1a1a] leading-tight mb-1">
-                This is to certify that
-              </div>
-              <div class="text-center font-mono text-[8px] tracking-[2px] uppercase text-[#1a1a1a]/25 mb-2.5">
-                Awarded to
-              </div>
-
-              <!-- Name with diamond dividers -->
-              <div class="flex items-center gap-3">
-                <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
-                <div class="w-1.5 h-1.5 rotate-45 bg-[#c9a84c]/50"></div>
-                <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
-              </div>
-              <div class="text-center font-serif italic text-[35px] text-[#1a1a1a] py-2">
-                {certificate.full_name_on_cert}
-              </div>
-              <div class="flex items-center gap-3 mb-3">
-                <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
-                <div class="w-1.5 h-1.5 rotate-45 bg-[#c9a84c]/50"></div>
-                <div class="flex-1 h-px bg-[#c9a84c]/30"></div>
-              </div>
-
-              <!-- Proficiency description -->
-              <p class="text-center text-[15px] text-[#1a1a1a]/45 leading-relaxed max-w-md mx-auto">
-                has successfully completed all required coursework and demonstrated proficiency in
-                <strong class="text-[#1a1a1a]/70 font-semibold">{certificate.tracks?.title}</strong>
-                {#if certificate.tracks?.slug === 'svelte-fundamentals'},
-                  encompassing core Svelte concepts, reactive programming principles, and component-driven UI development.
-                {:else if certificate.tracks?.slug === 'sveltekit'},
-                  encompassing file-based routing, server-side rendering, and building full-stack applications with SvelteKit.
-                {:else if certificate.tracks?.slug === 'svelte-advanced'},
-                  encompassing advanced Svelte patterns, performance optimization, and custom store architectures.
-                {:else if certificate.tracks?.slug === 'svelte-typescript'},
-                  encompassing type-safe Svelte and SvelteKit application development with full TypeScript integration.
-                {/if}
-              </p>
+              <span class="font-mono text-[#1a1a1a]/35 tracking-wide" style="font-size: 1.1cqi; line-height: 1">{formattedDate}</span>
             </div>
 
-            <!-- BOTTOM SECTION -->
-            <div>
-              <!-- Signature row -->
-              <div class="flex items-end justify-between gap-4 mb-3">
-                <div class="flex-1 text-center">
-                  <img src="/signature.svg" alt="Signature" class="h-8 w-auto mx-auto mb-1.5"
-                    style="filter: brightness(0) opacity(0.55);" crossorigin="anonymous" />
-                  <div class="h-px bg-[#c9a84c]/40 mb-1.5"></div>
-                  <div class="font-mono text-[7px] text-[#1a1a1a]/35 uppercase tracking-wide leading-relaxed">
-                    Daniel Montesclaros<br/>Lead Developer · Founder
-                  </div>
-                </div>
 
-                <!-- Official seal -->
-                <div class="flex-shrink-0 w-14 h-14 rounded-full border border-[#c9a84c] bg-[#faf7f2] flex flex-col items-center justify-center mb-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="mb-0.5">
-                    <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c" opacity="0.7"/>
-                  </svg>
-                  <span class="font-mono text-[6px] text-[#c9a84c]/60 tracking-widest uppercase text-center leading-tight">
-                    Official<br/>Seal
-                  </span>
-                </div>
-
-                <div class="flex-1 text-center">
-                  <div class="h-8 flex items-end justify-center mb-1.5">
-                    <span class="font-serif italic text-[17px] text-[#c9a84c]/70">SvelteSkill</span>
-                  </div>
-                  <div class="h-px bg-[#c9a84c]/40 mb-1.5"></div>
-                  <div class="font-mono text-[7px] text-[#1a1a1a]/35 uppercase tracking-wide leading-relaxed">
-                    SvelteSkill<br/>Platform Certification
-                  </div>
-                </div>
-              </div>
-
-              <!-- Footer row -->
-              <div class="h-px bg-[#c9a84c]/20 mb-2"></div>
-              <div class="flex items-center justify-between">
-                <span class="font-mono text-[7px] text-[#1a1a1a]/20 tracking-widest">SVSK · {shortId}</span>
+            <!-- Wax seal -->
+            <div class="flex justify-center" style="margin-bottom: 1.5cqi">
+              <div class="relative rounded-full bg-[#faf7f2] flex items-center justify-center"
+                style="width: 8cqi; height: 8cqi; border: 2px solid #c9a84c">
+                <div class="absolute inset-[8%] rounded-full" style="border: 1px dashed rgba(201,168,76,0.6)"></div>
+                <svg style="width: 45%; height: 45%" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c"/>
+                </svg>
               </div>
             </div>
 
+            <div class="text-center font-mono uppercase text-[#c9a84c]"
+              style="font-size: 1.1cqi; letter-spacing: 0.3cqi; margin-bottom: 1cqi">
+              Certificate of Completion
+            </div>
+
+            <div class="text-center font-serif italic text-[#1a1a1a] leading-tight"
+              style="font-size: 2.8cqi; margin-bottom: 0.5cqi">
+              This is to certify that
+            </div>
+            <div class="text-center font-mono uppercase text-[#1a1a1a]/25"
+              style="font-size: 1cqi; letter-spacing: 0.2cqi; margin-bottom: 1.5cqi">
+              Awarded to
+            </div>
+
+            <!-- Name with diamond dividers -->
+            <div class="flex items-center" style="gap: 2cqi">
+              <div class="flex-1 bg-[#c9a84c]/30" style="height: 1px"></div>
+              <div class="rotate-45 bg-[#c9a84c]/50" style="width: 0.6cqi; height: 0.6cqi"></div>
+              <div class="flex-1 bg-[#c9a84c]/30" style="height: 1px"></div>
+            </div>
+            <div class="text-center font-serif italic text-[#1a1a1a]"
+              style="font-size: 3.8cqi; padding: 0.8cqi 0">
+              {certificate.full_name_on_cert}
+            </div>
+            <div class="flex items-center" style="gap: 2cqi; margin-bottom: 2cqi">
+              <div class="flex-1 bg-[#c9a84c]/30" style="height: 1px"></div>
+              <div class="rotate-45 bg-[#c9a84c]/50" style="width: 0.6cqi; height: 0.6cqi"></div>
+              <div class="flex-1 bg-[#c9a84c]/30" style="height: 1px"></div>
+            </div>
+
+            <!-- Proficiency description -->
+            <p class="text-center text-[#1a1a1a]/45 leading-relaxed mx-auto" style="font-size: 1.3cqi; max-width: 80%">
+              has successfully completed all required coursework and demonstrated proficiency in
+              <strong class="text-[#1a1a1a]/70 font-semibold">{certificate.tracks?.title}</strong>
+              {#if certificate.tracks?.slug === 'svelte-fundamentals'},
+                encompassing core Svelte concepts, reactive programming principles, and component-driven UI development.
+              {:else if certificate.tracks?.slug === 'sveltekit'},
+                encompassing file-based routing, server-side rendering, and building full-stack applications with SvelteKit.
+              {:else if certificate.tracks?.slug === 'svelte-advanced'},
+                encompassing advanced Svelte patterns, performance optimization, and custom store architectures.
+              {:else if certificate.tracks?.slug === 'svelte-typescript'},
+                encompassing type-safe Svelte and SvelteKit application development with full TypeScript integration.
+              {/if}
+            </p>
           </div>
+
+          <!-- BOTTOM SECTION -->
+          <div>
+            <!-- Signature row -->
+            <div class="flex items-end justify-between" style="gap: 3cqi; margin-bottom: 1.5cqi">
+              <div class="flex-1 text-center">
+                <img src="/signature.svg" alt="Signature" class="mx-auto"
+                  style="height: 4cqi; width: auto; margin-bottom: 0.5cqi; filter: brightness(0) opacity(0.55);" crossorigin="anonymous" />
+                <div class="bg-[#c9a84c]/40" style="height: 1px; margin-bottom: 0.5cqi"></div>
+                <div class="font-mono text-[#1a1a1a]/35 uppercase leading-relaxed"
+                  style="font-size: 0.9cqi; letter-spacing: 0.1cqi">
+                  Daniel Montesclaros<br/>Lead Developer · Founder
+                </div>
+              </div>
+
+              <!-- Official seal -->
+              <div class="flex-shrink-0 rounded-full bg-[#faf7f2] flex flex-col items-center justify-center"
+                style="width: 10cqi; height: 10cqi; border: 1px solid #c9a84c">
+                <svg style="width: 35%; height: 35%; margin-bottom: 0.3cqi" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z" fill="#c9a84c" opacity="0.7"/>
+                </svg>
+                <span class="font-mono text-[#c9a84c]/60 tracking-widest uppercase text-center leading-tight"
+                  style="font-size: 0.75cqi">
+                  Official<br/>Seal
+                </span>
+              </div>
+
+              <div class="flex-1 text-center">
+                <div class="flex items-end justify-center" style="height: 4cqi; margin-bottom: 0.5cqi">
+                  <span class="font-serif italic text-[#c9a84c]/70" style="font-size: 2.2cqi">SvelteSkill</span>
+                </div>
+                <div class="bg-[#c9a84c]/40" style="height: 1px; margin-bottom: 0.5cqi"></div>
+                <div class="font-mono text-[#1a1a1a]/35 uppercase leading-relaxed"
+                  style="font-size: 0.9cqi; letter-spacing: 0.1cqi">
+                  SvelteSkill<br/>Platform Certification
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-[#c9a84c]/20" style="height: 1px; margin-bottom: 1cqi"></div>
+            <span class="font-mono text-[#1a1a1a]/20 tracking-widest" style="font-size: 1.05cqi">SVSK · {shortId}</span>
+          </div>
+
         </div>
+      </div>
 
         <!-- ── Actions row ────────────────────────────────────────────── -->
         <div class="mt-5 flex items-center justify-between gap-4">
