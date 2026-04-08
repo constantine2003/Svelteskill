@@ -432,7 +432,7 @@
 
       <!-- Already-passed banner — shown on load if the user passed previously -->
       {#if alreadyPassed && !submitted}
-        <div class="rounded-xl p-6 mb-10 flex items-center justify-between gap-6"
+        <div class="rounded-xl p-6 mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
           style="background: var(--orange-faint); border: 1px solid rgba(255,62,0,0.2)">
           <div>
             <div class="font-mono text-[10px] text-[#FF3E00] uppercase tracking-widest mb-1">
@@ -442,7 +442,7 @@
               You passed this quiz. You can retake it anytime or continue to the next part.
             </p>
           </div>
-          <div class="flex items-center gap-3 flex-shrink-0">
+          <div class="flex items-center gap-2 min-w-0">
             <button
               onclick={retryQuiz}
               class="font-mono text-[11px] px-4 py-2 rounded-lg transition-all"
@@ -451,7 +451,7 @@
             </button>
             {#if !isLastPart && nextPartFirstModule}
               <a rel="external" href="/tracks/{track.slug}/modules/{nextPartFirstModule.slug}"
-                class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all">
+                class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-mono text-[11px] px-4 py-2 rounded-lg transition-all">
                 Continue →
               </a>
             {:else if isLastPart}
@@ -627,20 +627,20 @@
              Progress dots fill orange as questions are answered.
         ──────────────────────────────────────────────────────────────── -->
         {#if !submitted}
-          <div class="sticky bottom-0 mt-12 py-5 flex items-center justify-between gap-4"
+          <div class="sticky bottom-0 mt-12 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4"
             style="background: var(--bg); border-top: 1px solid var(--border)">
 
             <!-- Answer progress dots + count -->
             <div class="flex items-center gap-3">
-              <div class="flex gap-1">
+              <div class="flex gap-[3px] flex-wrap max-w-[120px] sm:max-w-none">
                 {#each questions as q (q.id)}
                   <div class="w-1.5 h-1.5 rounded-full transition-colors"
                     style="background: {isAnswered(q.id) ? '#FF3E00' : 'var(--border2)'}">
                   </div>
                 {/each}
               </div>
-              <span class="font-mono text-[10px]" style="color: var(--text-muted)">
-                {answeredCount}/{questions.length} answered
+              <span class="font-mono text-[9px] sm:text-[10px] whitespace-nowrap" style="color: var(--text-muted)">
+                {answeredCount}/{questions.length}
               </span>
             </div>
 
@@ -648,7 +648,7 @@
             <button
               onclick={submitQuiz}
               disabled={!allAnswered || submitting}
-              class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-8 py-2.5 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+              class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-xs sm:text-sm px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0">
               {submitting ? 'Checking...' : 'Submit quiz'}
             </button>
           </div>
