@@ -58,6 +58,9 @@
   let passed          = $state(false);
   let correctCount    = $state(0);
 
+  // ── Mobile sidebar state ─────────────────────────────────────────────────
+  let sidebarOpen = $state(false);
+
   // ── Timer ────────────────────────────────────────────────────────────────
 
   /** 30-minute countdown in seconds. Auto-submits when it hits 0. */
@@ -66,6 +69,7 @@
 
   function startExam() {
     started = true;
+    sidebarOpen = false;
     timerInterval = setInterval(() => {
       timeLeft--;
       if (timeLeft <= 0) {
@@ -171,16 +175,57 @@
 
 <div class="flex min-h-screen" style="background: var(--bg)">
 
-  <!-- ── Sidebar ───────────────────────────────────────────────────────────
-       Same structure as the module/quiz sidebars.
-       The Final Exam entry is always shown as "ACTIVE" on this page.
+  <!-- ── Mobile backdrop ───────────────────────────────────────────────────
+       Dimmed overlay behind the drawer on mobile — tap to close.
   ──────────────────────────────────────────────────────────────────────── -->
-  <aside class="w-[260px] flex-shrink-0 flex flex-col fixed top-14 bottom-0 overflow-y-auto z-20"
+  {#if sidebarOpen}
+    <div
+      class="fixed inset-0 bg-black/40 z-30 md:hidden"
+      role="button"
+      tabindex="0"
+      aria-label="Close sidebar"
+      onclick={() => sidebarOpen = false}
+      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') sidebarOpen = false; }}
+    ></div>
+  {/if}
+
+  <!-- ── Mobile top bar ────────────────────────────────────────────────────
+       Shown only on mobile. Displays "Final Exam" label and hamburger.
+       Hidden during the exam itself to avoid obscuring the sticky header.
+  ──────────────────────────────────────────────────────────────────────── -->
+  {#if !started || submitted}
+    <div class="fixed top-14 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 md:hidden"
+      style="background: var(--bg); border-bottom: 1px solid var(--border)">
+      <span class="font-mono text-[11px] tracking-[2px] text-[#FF3E00] uppercase truncate pr-4">
+        Final Exam · {track.title}
+      </span>
+      <button
+        onclick={() => sidebarOpen = !sidebarOpen}
+        class="flex-shrink-0 flex flex-col gap-[5px] p-2 rounded-lg transition-colors"
+        style="color: var(--text)"
+        aria-label="Toggle navigation">
+        <span class="block w-5 h-px" style="background: currentColor"></span>
+        <span class="block w-5 h-px" style="background: currentColor"></span>
+        <span class="block w-5 h-px" style="background: currentColor"></span>
+      </button>
+    </div>
+  {/if}
+
+  <!-- ── Sidebar ───────────────────────────────────────────────────────────
+       Fixed below the navbar (top-14). Same structure as module/quiz sidebars.
+       The Final Exam entry is always shown as "ACTIVE" on this page.
+       On mobile: hidden off-canvas by default, slides in as a drawer.
+  ──────────────────────────────────────────────────────────────────────── -->
+  <aside class="w-[260px] flex-shrink-0 flex flex-col fixed top-14 bottom-0 overflow-y-auto z-40
+                transition-transform duration-200
+                -translate-x-full md:translate-x-0
+                {sidebarOpen ? '!translate-x-0' : ''}"
     style="background: var(--bg); border-right: 1px solid var(--border)">
 
     <!-- Back link + track title -->
     <div class="p-5" style="border-bottom: 1px solid var(--border)">
       <a rel="external" href="/tracks/{track.slug}"
+        onclick={() => sidebarOpen = false}
         class="inline-flex items-center gap-2 font-mono text-[10px] tracking-wide transition-colors mb-3"
         style="color: var(--text-muted)">
         <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -217,6 +262,7 @@
           {#each pModules as m (m.id)}
             {@const done = completedModuleIds.includes(m.id)}
             <a rel="external" href="/tracks/{track.slug}/modules/{m.slug}"
+              onclick={() => sidebarOpen = false}
               class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group"
               style="border: 1px solid transparent">
               <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center"
@@ -240,6 +286,7 @@
 
           <!-- Part quiz link -->
           <a rel="external" href="/tracks/{track.slug}/part/{pIdx}/quiz"
+            onclick={() => sidebarOpen = false}
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group"
             class:opacity-30={!allDone}
             class:pointer-events-none={!allDone}
@@ -284,14 +331,15 @@
   </aside>
 
   <!-- ── Main content ──────────────────────────────────────────────────────
+       Offset by sidebar width on desktop, full width on mobile.
        Three screens: pre-exam info → exam in progress → failed result.
        Passing redirects to /exam/result via goto().
   ──────────────────────────────────────────────────────────────────────── -->
-  <div class="flex-1 min-w-0 ml-[260px]">
+  <div class="flex-1 min-w-0 ml-0 md:ml-[260px]">
 
     {#if !started}
       <!-- ── Pre-exam screen ───────────────────────────────────────────── -->
-      <main class="max-w-[640px] mx-auto px-8 py-20 text-center">
+      <main class="max-w-[640px] mx-auto px-6 md:px-8 pt-36 md:pt-20 pb-20 text-center">
 
         <div class="flex items-center justify-center gap-2.5 mb-8">
           <div class="w-4 h-px bg-[#FF3E00]"></div>
@@ -384,7 +432,7 @@
 
     {:else if submitted && !passed}
       <!-- ── Failed result screen ──────────────────────────────────────── -->
-      <main class="max-w-[640px] mx-auto px-8 py-20 text-center">
+      <main class="max-w-[640px] mx-auto px-6 md:px-8 pt-36 md:pt-20 pb-20 text-center">
 
         <div class="flex items-center justify-center gap-2.5 mb-8">
           <div class="w-4 h-px" style="background: var(--border2)"></div>
@@ -462,33 +510,40 @@
 
     {:else}
       <!-- ── Exam in progress ──────────────────────────────────────────── -->
-      <div class="max-w-[760px] mx-auto px-8 py-10">
+      <div class="max-w-[760px] mx-auto px-4 md:px-8 py-10">
 
-        <!-- Sticky exam header — track title + answer count + timer + submit -->
-        <div class="sticky top-14 z-30 py-4 mb-10 flex items-center justify-between"
+        <!-- Sticky exam header — track title + answer count + timer + submit
+             Uses top-14 on desktop (global navbar only).
+             On mobile the mobile top bar is hidden during the exam, so top-14
+             is still correct here — the sticky header itself takes that role. -->
+        <div class="sticky top-14 z-30 py-4 mb-10"
           style="background: var(--bg); border-bottom: 1px solid var(--border)">
-          <div>
-            <div class="font-mono text-[10px] text-[#FF3E00] uppercase tracking-widest mb-0.5">Final Exam</div>
-            <div class="font-serif italic text-sm" style="color: var(--text-muted)">{track.title}</div>
-          </div>
-          <div class="flex items-center gap-5">
-            <span class="font-mono text-[11px]" style="color: var(--text-faint)">
-              {answeredCount}/{questions.length}
-            </span>
-            <!-- Timer — turns red under 5 minutes -->
-            <div class="flex items-center gap-1.5"
-              style="color: {timeWarning ? 'rgb(248,113,113)' : 'var(--text-muted)'}">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-              </svg>
-              <span class="font-mono text-[13px] font-medium">{formatTime(timeLeft)}</span>
+          <div class="flex items-center justify-between gap-3">
+            <!-- Left: track info (hidden on very small screens to save space) -->
+            <div class="hidden sm:block">
+              <div class="font-mono text-[10px] text-[#FF3E00] uppercase tracking-widest mb-0.5">Final Exam</div>
+              <div class="font-serif italic text-sm" style="color: var(--text-muted)">{track.title}</div>
             </div>
-            <button
-              onclick={submitExam}
-              disabled={!allAnswered || submitting}
-              class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-5 py-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-              {submitting ? 'Submitting...' : 'Submit exam'}
-            </button>
+            <!-- Right: answer count + timer + submit -->
+            <div class="flex items-center gap-3 sm:gap-5 ml-auto">
+              <span class="font-mono text-[11px]" style="color: var(--text-faint)">
+                {answeredCount}/{questions.length}
+              </span>
+              <!-- Timer — turns red under 5 minutes -->
+              <div class="flex items-center gap-1.5"
+                style="color: {timeWarning ? 'rgb(248,113,113)' : 'var(--text-muted)'}">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                </svg>
+                <span class="font-mono text-[13px] font-medium">{formatTime(timeLeft)}</span>
+              </div>
+              <button
+                onclick={submitExam}
+                disabled={!allAnswered || submitting}
+                class="inline-flex items-center gap-2 bg-[#FF3E00] hover:brightness-110 text-white font-semibold text-sm px-4 md:px-5 py-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                {submitting ? 'Submitting...' : 'Submit exam'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -513,7 +568,7 @@
             <div class="flex flex-col gap-4">
 
               <!-- Question text -->
-              <div class="flex items-start gap-4">
+              <div class="flex items-start gap-3 md:gap-4">
                 <span class="flex-shrink-0 font-mono text-[11px] rounded-md px-2 py-1 mt-0.5"
                   style="color: var(--text-faint); background: var(--surface2)">
                   {String(qi + 1).padStart(2, '0')}
@@ -524,7 +579,7 @@
               </div>
 
               <!-- Answer options -->
-              <div class="flex flex-col gap-2 pl-10">
+              <div class="flex flex-col gap-2 pl-8 md:pl-10">
                 {#each options as option, oi (oi)}
                   <button
                     onclick={() => selectAnswer(question.id, oi)}

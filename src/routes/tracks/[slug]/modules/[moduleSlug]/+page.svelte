@@ -95,6 +95,9 @@
     partAssessmentScore  = data.partAssessment?.score ?? null;
   });
 
+  // ── Mobile sidebar state ─────────────────────────────────────────────────
+  let sidebarOpen = $state(false);
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
   /**
@@ -203,16 +206,55 @@
 
 <div class="flex min-h-[calc(100vh-3.5rem)]" style="background: var(--bg)">
 
+  <!-- ── Mobile backdrop ───────────────────────────────────────────────────
+       Dimmed overlay behind the drawer on mobile — tap to close.
+  ──────────────────────────────────────────────────────────────────────── -->
+  {#if sidebarOpen}
+    <div
+      class="fixed inset-0 bg-black/40 z-30 md:hidden"
+      role="button"
+      tabindex="0"
+      aria-label="Close sidebar"
+      onclick={() => sidebarOpen = false}
+      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') sidebarOpen = false; }}
+    ></div>
+  {/if}
+
+  <!-- ── Mobile top bar ────────────────────────────────────────────────────
+       Shown only on mobile (below the global navbar). Displays the current
+       module title and a hamburger button to open the sidebar drawer.
+  ──────────────────────────────────────────────────────────────────────── -->
+  <div class="fixed top-14 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 md:hidden"
+    style="background: var(--bg); border-bottom: 1px solid var(--border)">
+    <span class="font-mono text-[11px] tracking-[2px] text-[#FF3E00] uppercase truncate pr-4">
+      Module {module.order_index} · {module.title}
+    </span>
+    <button
+      onclick={() => sidebarOpen = !sidebarOpen}
+      class="flex-shrink-0 flex flex-col gap-[5px] p-2 rounded-lg transition-colors"
+      style="color: var(--text)"
+      aria-label="Toggle navigation">
+      <span class="block w-5 h-px" style="background: currentColor"></span>
+      <span class="block w-5 h-px" style="background: currentColor"></span>
+      <span class="block w-5 h-px" style="background: currentColor"></span>
+    </button>
+  </div>
+
   <!-- ── Sidebar ───────────────────────────────────────────────────────────
        Fixed below the navbar (top-14). Lists all modules grouped by part
        with live completion state derived from localCompletedIds.
+       On mobile: hidden off-canvas by default, slides in as a drawer.
   ──────────────────────────────────────────────────────────────────────── -->
-  <aside class="w-[260px] flex-shrink-0 flex flex-col fixed top-14 bottom-0 overflow-y-auto z-20"
+  <aside class="w-[260px] flex-shrink-0 flex flex-col fixed top-14 bottom-0 overflow-y-auto z-40
+                transition-transform duration-200
+                -translate-x-full md:translate-x-0
+                {sidebarOpen ? '!translate-x-0' : ''}"
     style="background: var(--bg); border-right: 1px solid var(--border)">
 
     <!-- Sidebar header — back link + track title -->
     <div class="p-5" style="border-bottom: 1px solid var(--border)">
       <a rel="external" href="/tracks/{track.slug}"
+        onclick={() => sidebarOpen = false}
         class="inline-flex items-center gap-2 font-mono text-[10px] tracking-wide transition-colors mb-3"
         style="color: var(--text-muted)">
         <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -253,6 +295,7 @@
                 neither → normal text, index number
             -->
             <a rel="external" href="/tracks/{track.slug}/modules/{m.slug}"
+              onclick={() => sidebarOpen = false}
               class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group"
               style="
                 background: {active ? 'var(--orange-faint)' : 'transparent'};
@@ -286,6 +329,7 @@
 
           <!-- Part quiz row — locked until all modules in the part are done -->
           <a rel="external" href={allDone ? `/tracks/${track.slug}/part/${pIdx}/quiz` : '#'}
+            onclick={() => sidebarOpen = false}
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group"
             class:opacity-40={!allDone && !quizPassed}
             class:pointer-events-none={!allDone && !quizPassed}
@@ -343,6 +387,7 @@
       <div class="mx-3 mt-3 mb-3" style="border-top: 1px solid var(--border)"></div>
       {#if allPartsPassed}
         <a rel="external" href="/tracks/{track.slug}/exam"
+          onclick={() => sidebarOpen = false}
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group"
           style="border: 1px solid transparent">
           <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center"
@@ -369,10 +414,11 @@
   </aside>
 
   <!-- ── Main content area ─────────────────────────────────────────────────
-       Offset by sidebar width. Contains the rendered lesson and bottom CTA.
+       Offset by sidebar width on desktop, full width on mobile.
+       Contains the rendered lesson and bottom CTA.
   ──────────────────────────────────────────────────────────────────────── -->
-  <div class="flex-1 min-w-0 ml-[260px]">
-    <div class="max-w-[720px] mx-auto px-10 py-12">
+  <div class="flex-1 min-w-0 ml-0 md:ml-[260px]">
+    <div class="max-w-[720px] mx-auto px-4 md:px-10 pt-28 md:pt-12 pb-12">
 
       <!-- Module header — track position badge + optional completed pill + title -->
       <div class="mb-10">
@@ -432,7 +478,7 @@
 
         {#if !isCompleted}
           <!-- State 1: Module not yet complete — primary mark-complete CTA -->
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <p class="text-sm font-light" style="color: var(--text-faint)">
               Finished reading? Mark this lesson as complete.
             </p>
@@ -444,7 +490,7 @@
 
         {:else if !isLastInPart}
           <!-- State 2: Complete, not the last lesson in this part — next lesson CTA -->
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <span class="font-mono text-[10px]" style="color: var(--text-faint)">✓ Lesson completed</span>
             {#if nextModule}
               <a rel="external" href="/tracks/{track.slug}/modules/{nextModule.slug}"
@@ -467,7 +513,7 @@
 
         {:else if isLastInPart && allPartModulesCompleted && !partAssessmentPassed}
           <!-- State 4: All lessons in part done, quiz not yet passed -->
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div class="font-mono text-[10px] text-[#FF3E00] uppercase tracking-widest mb-1">
                 Part {partIndex} — {partLabels[partIndex]}
@@ -484,7 +530,7 @@
 
         {:else if isLastInPart && partAssessmentPassed}
           <!-- State 5: Part quiz already passed — continue to next part or final exam -->
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div class="font-mono text-[9px] text-[#FF3E00] tracking-widest uppercase mb-1">
                 Part {partIndex} quiz passed — {partAssessmentScore}%
