@@ -131,6 +131,9 @@
   let passed          = $state(false);
   let correctCount    = $state(0);
 
+  // ── Mobile sidebar state ─────────────────────────────────────────────────
+  let sidebarOpen = $state(false);
+
   /** Record the user's selected option index for a question. */
   function selectAnswer(questionId: number, index: number) {
     if (submitted) return;
@@ -213,16 +216,56 @@
 
 <div class="flex min-h-screen" style="background: var(--bg)">
 
+  <!-- ── Mobile backdrop ───────────────────────────────────────────────────
+       Dimmed overlay behind the drawer on mobile — tap to close.
+  ──────────────────────────────────────────────────────────────────────── -->
+  {#if sidebarOpen}
+    <div
+      class="fixed inset-0 bg-black/40 z-30 md:hidden"
+      role="button"
+      tabindex="0"
+      aria-label="Close sidebar"
+      onclick={() => sidebarOpen = false}
+      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { sidebarOpen = false; } }}
+    ></div>
+  {/if}
+
+  <!-- ── Mobile top bar ────────────────────────────────────────────────────
+       Shown only on mobile (below the global navbar). Displays the current
+       part label and a hamburger button to open the sidebar drawer.
+  ──────────────────────────────────────────────────────────────────────── -->
+  <div class="fixed top-14 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 md:hidden"
+    style="background: var(--bg); border-bottom: 1px solid var(--border)">
+    <span class="font-mono text-[11px] tracking-[2px] text-[#FF3E00] uppercase">
+      Part {partIndex} · {partLabel}
+    </span>
+    <button
+      onclick={() => sidebarOpen = !sidebarOpen}
+      class="flex flex-col gap-[5px] p-2 rounded-lg transition-colors"
+      style="color: var(--text)"
+      aria-label="Toggle navigation">
+      <span class="block w-5 h-px" style="background: currentColor"></span>
+      <span class="block w-5 h-px" style="background: currentColor"></span>
+      <span class="block w-5 h-px" style="background: currentColor"></span>
+    </button>
+  </div>
+
   <!-- ── Sidebar ───────────────────────────────────────────────────────────
        Same structure as the module page sidebar. The active quiz row is
        highlighted with an orange tint instead of a plain module row.
+       On mobile: hidden off-canvas by default, slides in as a drawer.
   ──────────────────────────────────────────────────────────────────────── -->
-  <aside class="w-[260px] flex-shrink-0 flex flex-col fixed top-14 bottom-0 overflow-y-auto z-20"
+  <aside
+    class="w-[260px] flex-shrink-0 flex flex-col fixed top-14 bottom-0 overflow-y-auto z-40
+           transition-transform duration-200
+           -translate-x-full md:translate-x-0
+           {sidebarOpen ? '!translate-x-0' : ''}"
     style="background: var(--bg); border-right: 1px solid var(--border)">
 
     <!-- Back link + track title -->
     <div class="p-5" style="border-bottom: 1px solid var(--border)">
       <a rel="external" href="/tracks/{track.slug}"
+        onclick={() => sidebarOpen = false}
         class="inline-flex items-center gap-2 font-mono text-[10px] tracking-wide transition-colors mb-3"
         style="color: var(--text-muted)">
         <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -257,6 +300,7 @@
           {#each pModules as m (m.id)}
             {@const done = completedModuleIds.includes(m.id)}
             <a rel="external" href="/tracks/{track.slug}/modules/{m.slug}"
+              onclick={() => sidebarOpen = false}
               class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group"
               style="border: 1px solid transparent">
               <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center"
@@ -280,6 +324,7 @@
 
           <!-- Part quiz row — highlighted when this is the active quiz -->
           <a rel="external" href={allDone ? `/tracks/${track.slug}/part/${pIdx}/quiz` : '#'}
+            onclick={() => sidebarOpen = false}
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all group"
             class:opacity-40={!isActivePart && !quizPassed && !allDone}
             class:pointer-events-none={!isActivePart && !quizPassed && !allDone}
@@ -335,6 +380,7 @@
       <div class="mx-3 mt-3 mb-3" style="border-top: 1px solid var(--border)"></div>
       {#if allPartsPassed}
         <a rel="external" href="/tracks/{track.slug}/exam"
+          onclick={() => sidebarOpen = false}
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group"
           style="border: 1px solid transparent">
           <div class="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center"
@@ -364,8 +410,8 @@
        Contains the quiz header, optional already-passed banner,
        score result card (after submission), and the question list.
   ──────────────────────────────────────────────────────────────────────── -->
-  <div class="flex-1 min-w-0 ml-[260px]">
-    <main class="max-w-[760px] mx-auto px-8 py-14">
+  <div class="flex-1 min-w-0 ml-0 md:ml-[260px]">
+    <main class="max-w-[760px] mx-auto px-4 md:px-8 pt-28 md:pt-14 pb-14">
 
       <!-- Quiz header -->
       <div class="mb-12">
