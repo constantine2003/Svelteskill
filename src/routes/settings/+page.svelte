@@ -23,8 +23,10 @@
     data: {
       profile: {
         display_name: string;
-        full_name: string | null;
-        avatar_url: string | null;
+        full_name:    string | null;
+        avatar_url:   string | null;
+        /** Current saved username — used for the profile URL display. */
+        username:     string;
       };
     };
     /**
@@ -32,10 +34,10 @@
      * It is null on the initial page load and after a successful navigation.
      */
     form: {
-      error?: string;
-      success?: boolean;
+      error?:        string;
+      success?:      boolean;
       display_name?: string;
-      full_name?: string;
+      full_name?:    string;
     } | null;
   }
 
@@ -72,6 +74,56 @@
     fullName.trim()    !== (data.profile.full_name    ?? '')
   );
 
+  // ── Avatar ───────────────────────────────────────────────────────────────
+
+  /**
+   * Only render OAuth avatar URLs that begin with https://.
+   *
+   * Why: a non-https value is unexpected and could be a javascript: URI
+   * injection if the auth pipeline is ever misconfigured. Cheap guard —
+   * falls back to the monogram avatar silently.
+   */
+  const safeAvatarUrl = $derived(
+    profile?.avatar_url?.startsWith('https://') ? profile.avatar_url : ''
+  );
+
+  // ── Username / profile URL preview ──────────────────────────────────────
+
+  /**
+   * Mirrors the slugify() function in +page.server.ts so the client can
+   * show a real-time preview of what the username will look like after saving.
+   *
+   * IMPORTANT: Keep this in sync with the server implementation.
+   * Rules: lowercase, strip non-alphanumeric (except _ and -),
+   *        spaces → underscores, truncate to 30 characters.
+   */
+  function slugify(name: string): string {
+    return name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .replace(/\s+/g, '_')
+      .slice(0, 30);
+  }
+
+  /**
+   * The slug derived from the current (possibly unsaved) display name.
+   * Used to preview the future profile URL before the user saves.
+   * Falls back to the current saved username if the input is empty.
+   */
+  const previewSlug = $derived(
+    slugify(displayName) || profile.username
+  );
+
+  /**
+   * True when the display name has changed and will produce a new username.
+   * Used to show/hide the "URL will change" disclaimer.
+   */
+  const usernameWillChange = $derived(
+    displayName.trim() !== data.profile.display_name &&
+    slugify(displayName) !== profile.username
+  );
+
   // ── Copy-link state ──────────────────────────────────────────────────────
 
   /**
@@ -81,20 +133,14 @@
   let copied = $state(false);
 
   function copyLink() {
-    navigator.clipboard.writeText(
-      `http://localhost:5173/u/${profile.display_name.toLowerCase().replace(/\s+/g, '-')}`
-    );
+    // Use window.location.origin so this works in all environments
+    // (local dev, staging, production) without hardcoding a hostname.
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const slug = hasChanges ? previewSlug : profile.username;
+    navigator.clipboard.writeText(`${origin}/u/${slug}`);
     copied = true;
     setTimeout(() => (copied = false), 2000);
   }
-
-  /**
-   * URL-safe version of the display name used to construct the public
-   * profile link. Spaces become hyphens; everything is lowercased.
-   */
-  const profileSlug = $derived(
-    profile.display_name.toLowerCase().replace(/\s+/g, '-')
-  );
 </script>
 
 <svelte:head>
@@ -146,17 +192,18 @@
     </div>
 
     <!-- ── Avatar row ────────────────────────────────────────────────────
-         Shows the user's OAuth avatar if one exists, otherwise falls back
-         to a monogram initial styled with the orange brand accent.
+         Shows the user's OAuth avatar if one exists (and passes the https://
+         safety check), otherwise falls back to a monogram initial styled
+         with the orange brand accent.
          Avatar uploads are not supported — the image is always pulled from
          the OAuth provider (GitHub or Google) at sign-in time.
     ──────────────────────────────────────────────────────────────────── -->
     <div class="flex items-center gap-5 mb-8 pb-8" style="border-bottom: 1px solid var(--border)">
 
-      {#if profile.avatar_url}
-        <!-- OAuth avatar image -->
+      {#if safeAvatarUrl}
+        <!-- OAuth avatar image — only rendered for verified https:// URLs -->
         <img
-          src={profile.avatar_url}
+          src={safeAvatarUrl}
           alt={profile.display_name}
           class="w-16 h-16 rounded-full"
           style="border: 1px solid var(--border2)"
@@ -187,8 +234,10 @@
 
     <!-- ── Public profile link ───────────────────────────────────────────
          Displays the user's public profile URL and a copy-to-clipboard
-         button. The URL is derived from the display name at render time;
-         it updates live as they type in the display name field below.
+         button. The URL updates in real time as the display name is edited,
+         showing a preview of what the slug will become after saving.
+         A disclaimer appears when the slug would change so users aren't
+         surprised — the server may append a suffix if there's a collision.
     ──────────────────────────────────────────────────────────────────── -->
     <div class="mb-8 pb-8" style="border-bottom: 1px solid var(--border)">
 
@@ -198,10 +247,10 @@
           Your public profile
         </div>
 
-        <!-- Opens the public profile page -->
+        <!-- Opens the public profile page using the current saved username -->
         <a
           rel="external"
-          href="/u/{profileSlug}"
+          href="/u/{profile.username}"
           class="inline-flex items-center gap-1.5 font-mono text-[10px] transition-colors hover:text-[#FF3E00]"
           style="color: var(--text-faint)"
         >
@@ -214,12 +263,12 @@
 
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
 
-        <!-- Read-only URL display — truncates on small screens -->
+        <!-- Read-only URL display — reflects real-time preview slug -->
         <div
           class="flex-1 rounded-xl px-5 py-3.5 font-mono text-[12px] truncate"
           style="background: var(--surface); border: 1px solid var(--border); color: var(--text-faint)"
         >
-          http://localhost:5173/u/{profileSlug}
+          /u/{hasChanges ? previewSlug : profile.username}
         </div>
 
         <!--
@@ -228,6 +277,7 @@
           Switches to an orange tint for 2 seconds after clicking to confirm
           the copy succeeded. The inline style ternary is necessary because
           Tailwind cannot dynamically reference CSS variables in class strings.
+          Copies the full URL using window.location.origin (not a hardcoded host).
         -->
         <button
           type="button"
@@ -242,6 +292,22 @@
           {copied ? '✓ Copied!' : 'Copy'}
         </button>
       </div>
+
+      <!--
+        Username-change disclaimer
+        ──────────────────────────
+        Shown only when the typed display name would produce a different slug
+        from the current saved username. Warns the user that:
+          1. The URL will change after saving
+          2. A numeric suffix may be appended if there is a collision
+        Hidden once changes are saved (usernameWillChange becomes false).
+      -->
+      {#if usernameWillChange}
+        <p class="font-mono text-[10px] mt-2.5 leading-relaxed" style="color: var(--text-faint)">
+          ⚠ Your profile URL will change to <span style="color: var(--text)">/u/{previewSlug}</span> after saving.
+          If that username is taken, a number will be added automatically (e.g. <span style="color: var(--text)">/u/{previewSlug}-1</span>).
+        </p>
+      {/if}
     </div>
 
     <!-- ── Success banner ────────────────────────────────────────────────
@@ -284,24 +350,35 @@
          keeping it functional without JavaScript. The callback sets `saving`
          to true during the request so the button shows a loading state, then
          calls `update()` to merge the action's response back into `form`.
+
+         result.type is checked before resetting `saving` — if the action
+         redirects, the page is already navigating and resetting would cause
+         a brief flicker back to the idle button state.
     ──────────────────────────────────────────────────────────────────── -->
     <form
       method="POST"
       action="?/updateProfile"
       use:enhance={() => {
         saving = true;
-        return async ({ update }) => {
+        return async ({ update, result }) => {
+          // Only reset saving if the action did NOT redirect away
+          if (result.type !== 'redirect') {
+            saving = false;
+          }
+          // update() re-runs the load function and re-renders form action data
           await update();
-          saving = false;
         };
       }}
     >
       <div class="flex flex-col gap-5">
 
         <!-- ── Display name field ──────────────────────────────────────
-             Required. Shown publicly on the user's profile page and
-             used to build their profile URL slug.
-             Max 50 characters — enforced both here and in the server action.
+             Required. Shown publicly on the user's profile page and used
+             to derive their username / profile URL slug on the server.
+             maxlength mirrors MAX_DISPLAY_NAME_LENGTH on the server (50) —
+             if you change one, change both.
+             autocomplete="nickname" hints to browsers/password managers
+             that this is a display name field.
         ────────────────────────────────────────────────────────────── -->
         <div>
           <label
@@ -318,8 +395,9 @@
             type="text"
             bind:value={displayName}
             placeholder="How you appear on the platform"
-            maxlength="50"
             required
+            maxlength={50}
+            autocomplete="nickname"
             class="w-full rounded-xl px-5 py-3.5 text-sm font-light focus:outline-none transition-colors"
             style="
               background: var(--surface);
@@ -337,7 +415,10 @@
         <!-- ── Full name field ────────────────────────────────────────
              Optional. This value is printed verbatim on certificates,
              so users should enter it exactly as they want it to appear.
-             Max 100 characters — enforced both here and server-side.
+             maxlength mirrors MAX_FULL_NAME_LENGTH on the server (100) —
+             if you change one, change both.
+             autocomplete="name" hints to browsers/password managers
+             that this is a legal full name field.
         ────────────────────────────────────────────────────────────── -->
         <div>
           <label
@@ -358,7 +439,8 @@
             type="text"
             bind:value={fullName}
             placeholder="Your real name for certificates"
-            maxlength="100"
+            maxlength={100}
+            autocomplete="name"
             class="w-full rounded-xl px-5 py-3.5 text-sm font-light focus:outline-none transition-colors"
             style="
               background: var(--surface);
@@ -407,6 +489,8 @@
                1. A save is already in flight (`saving`)
                2. No fields have changed (`!hasChanges`)
                3. The required display name field is blank (`!displayName.trim()`)
+             Note: the disabled state is a UX convenience only — server-side
+             validation in +page.server.ts is the true enforcement layer.
         ────────────────────────────────────────────────────────────── -->
         <div class="flex items-center justify-between pt-1 gap-4">
 
