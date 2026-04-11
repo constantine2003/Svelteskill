@@ -45,6 +45,7 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.10.0",
 		"@supabase/supabase-js": "^2.100.1",
+		"highlight.js": "^11.11.1",
 		"html2canvas": "^1.4.1",
 		"lucide-svelte": "^1.0.1"
 	}

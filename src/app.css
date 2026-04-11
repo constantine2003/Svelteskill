@@ -51,7 +51,7 @@ html, body {
   --orange-faint: rgba(255, 62, 0, 0.09);
   --nav-bg: rgba(247, 245, 242, 0.92);
   --code-block-bg: #f0ede8;
-  --code-block-text: #383a42;
+  --code-block-text: #24292e;
 }
 
 /* ── Lesson content ── */
@@ -81,3 +81,20 @@ html, body {
   background: var(--orange-faint);
   color: var(--text-muted);
 }
+
+/* Light mode code blocks */
+:root.light .hljs {
+  background: #f0ede8;
+  color: #24292e;
+}
+:root.light .hljs-comment,
+:root.light .hljs-quote { color: #6a737d; }
+:root.light .hljs-keyword,
+:root.light .hljs-selector-tag { color: #d73a49; }
+:root.light .hljs-string,
+:root.light .hljs-addition { color: #22863a; }
+:root.light .hljs-number,
+:root.light .hljs-variable { color: #e36209; }
+:root.light .hljs-title,
+:root.light .hljs-built_in { color: #6f42c1; }
+:root.light .hljs-attr { color: #005cc5; }
