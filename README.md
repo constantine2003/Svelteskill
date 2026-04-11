@@ -2,7 +2,7 @@
 
 <br />
 
-<img src="static/svelteskill_logo.png" alt="SvelteSkill" width="100" />
+<img src="static/svelteskill_logo.png" alt="SvelteSkill" width="200" />
 
 <br />
 
