@@ -14,6 +14,26 @@
   import { supabase } from '$lib/supabase/client';
   import { invalidate } from '$app/navigation';
   import type { PageData } from './$types';
+  import hljs from 'highlight.js/lib/core';
+
+  // Register only the languages we use to keep bundle size down
+  import svelte from 'highlight.js/lib/languages/xml';
+  import typescript from 'highlight.js/lib/languages/typescript';
+  import javascript from 'highlight.js/lib/languages/javascript';
+  import css from 'highlight.js/lib/languages/css';
+  import bash from 'highlight.js/lib/languages/bash';
+  import sql from 'highlight.js/lib/languages/sql';
+  import json from 'highlight.js/lib/languages/json';
+  // Svelte files are highlighted with the XML language definition, which works well for HTML + Svelte syntax
+  hljs.registerLanguage('svelte', svelte);
+  hljs.registerLanguage('typescript', typescript);
+  hljs.registerLanguage('ts', typescript);
+  hljs.registerLanguage('javascript', javascript);
+  hljs.registerLanguage('js', javascript);
+  hljs.registerLanguage('css', css);
+  hljs.registerLanguage('bash', bash);
+  hljs.registerLanguage('sql', sql);
+  hljs.registerLanguage('json', json);
 
   // ── Types ────────────────────────────────────────────────────────────────
 
@@ -133,43 +153,70 @@
    * Runs on trusted server-generated content only — NOT user input.
    */
   function parseMarkdown(content: string): string {
-    const codeBlocks:  string[] = [];
+    const codeBlocks: string[] = [];
     const inlineCodes: string[] = [];
 
-    // 1. Extract fenced code blocks before any other processing
-    let result = content.replace(/```(\w*)\s*\n?([\s\S]*?)```/g, (_, _lang, code) => {
-      const decoded = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-      const escaped = decoded.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      codeBlocks.push(`<pre><code>${escaped}</code></pre>`);
+    // Extract fenced code blocks and apply syntax highlighting
+    let result = content.replace(/```(\w*)\s*\n?([\s\S]*?)```/g, (_, lang, code) => {
+      const decoded = code
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+
+      let highlighted: string;
+      try {
+        if (lang && hljs.getLanguage(lang)) {
+          highlighted = hljs.highlight(decoded, { language: lang }).value;
+        } else {
+          highlighted = hljs.highlightAuto(decoded).value;
+        }
+      } catch {
+        // Fallback to escaped plain text if highlighting fails
+        highlighted = decoded
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      codeBlocks.push(
+        `<pre><code class="hljs language-${lang || 'plaintext'}">${highlighted}</code></pre>`
+      );
       return `__CODEBLOCK_${codeBlocks.length - 1}__`;
     });
 
-    // 2. Extract inline code spans
+    // Extract inline code
     result = result.replace(/`([^`]+)`/g, (_, code) => {
-      const decoded = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-      const safe    = decoded.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const decoded = code
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+      const safe = decoded
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
       inlineCodes.push(`<code>${safe}</code>`);
       return `__INLINECODE_${inlineCodes.length - 1}__`;
     });
 
-    // 3. Decode any remaining HTML entities from the server
+    // Decode remaining prose
     result = result
-      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
 
-    // 4. Apply block and inline markdown rules
+    // Markdown processing
     result = result
       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
-      .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g,     '<em>$1</em>')
-      .replace(/^> (.+)$/gm,    '<blockquote>$1</blockquote>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
       .replace(/\n\n/g, '</p><p>')
       .replace(/^(?!<[hpbuci]|<pre|<block|__)(.+)$/gm, '<p>$1</p>');
 
-    // 5. Restore extracted code blocks and inline code
-    result = result.replace(/__CODEBLOCK_(\d+)__/g,  (_, i) => codeBlocks[Number(i)]);
+    // Restore placeholders
+    result = result.replace(/__CODEBLOCK_(\d+)__/g, (_, i) => codeBlocks[Number(i)]);
     result = result.replace(/__INLINECODE_(\d+)__/g, (_, i) => inlineCodes[Number(i)]);
 
     return result;

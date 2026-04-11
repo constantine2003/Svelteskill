@@ -5,7 +5,8 @@
   import { invalidate } from '$app/navigation';
   import { onMount } from 'svelte';
   import { theme } from '$lib/stores/theme';
-
+  import 'highlight.js/styles/atom-one-dark.css';
+  
   let { data, children } = $props();
   const profile = $derived(data.profile ?? null);
 
