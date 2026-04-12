@@ -74,7 +74,13 @@
   defined in app.css.
 -->
 <div class="min-h-screen" style="background: var(--bg)">
-  <main class="max-w-[760px] mx-auto px-8 py-14">
+
+  <!--
+    Responsive container
+    ────────────────────
+    px-4 py-10 on mobile, px-8 py-14 on sm+ breakpoint.
+  -->
+  <main class="max-w-[760px] mx-auto px-4 py-10 sm:px-8 sm:py-14">
 
     <!-- ── Profile header ────────────────────────────────────────────────
          Shows the learner's avatar, display name, full name (if different),
