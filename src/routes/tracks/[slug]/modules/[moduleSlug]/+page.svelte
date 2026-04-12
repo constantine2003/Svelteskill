@@ -14,18 +14,17 @@
   import { supabase } from '$lib/supabase/client';
   import { invalidate } from '$app/navigation';
   import type { PageData } from './$types';
-  import hljs from 'highlight.js/lib/core';
 
   // Register only the languages we use to keep bundle size down
-  import svelte from 'highlight.js/lib/languages/xml';
+  import hljs from 'highlight.js/lib/core';
+  import xml from 'highlight.js/lib/languages/xml';
   import typescript from 'highlight.js/lib/languages/typescript';
   import javascript from 'highlight.js/lib/languages/javascript';
   import css from 'highlight.js/lib/languages/css';
   import bash from 'highlight.js/lib/languages/bash';
   import sql from 'highlight.js/lib/languages/sql';
   import json from 'highlight.js/lib/languages/json';
-  // Svelte files are highlighted with the XML language definition, which works well for HTML + Svelte syntax
-  hljs.registerLanguage('svelte', svelte);
+
   hljs.registerLanguage('typescript', typescript);
   hljs.registerLanguage('ts', typescript);
   hljs.registerLanguage('javascript', javascript);
@@ -34,6 +33,208 @@
   hljs.registerLanguage('bash', bash);
   hljs.registerLanguage('sql', sql);
   hljs.registerLanguage('json', json);
+  // xml is registered so raw HTML code blocks also get highlighted correctly.
+  // The `html` alias lets authors write ```html in lesson markdown.
+  hljs.registerLanguage('xml', xml);
+  hljs.registerLanguage('html', xml);
+
+  // ── Custom Svelte language definition ────────────────────────────────────
+  //
+  // We define our own Svelte grammar instead of relying on the XML language
+  // because Svelte has constructs XML doesn't know about:
+  //   • {expression} interpolations
+  //   • {#if}, {#each}, {/if} block directives
+  //   • PascalCase component tags like <MyComponent />
+  //
+  // IMPORTANT — we do NOT use subLanguage for <script> / <style> blocks here.
+  // Nesting a subLanguage inside an hljs grammar causes the entire block to
+  // be painted with a single token class ("all blue" bug). Instead, script
+  // and style sections are extracted and highlighted separately in
+  // `highlightSvelteBlock` below before being handed back to this grammar
+  // for the remaining template markup.
+  hljs.registerLanguage('svelte', (hljs) => {
+
+    // Highlights {expression} nodes in templates — things like {count},
+    // {user.name}, {#if condition}, $derived runes, etc.
+    const SVELTE_EXPRESSION = {
+      className: 'template-variable',
+      begin: /\{/,
+      end: /\}/,
+      contains: [
+        {
+          // JS/TS keywords that commonly appear inside template expressions
+          className: 'keyword',
+          match: /\b(let|const|var|function|return|if|else|for|while|async|await|import|export|from|default)\b/
+        },
+        {
+          // Svelte 5 runes and reactive store references ($state, $derived, $store, etc.)
+          className: 'built_in',
+          match: /\$[a-zA-Z_][a-zA-Z0-9_]*/
+        },
+        {
+          className: 'string',
+          variants: [
+            { begin: /"/, end: /"/ },
+            { begin: /'/, end: /'/ },
+            { begin: /`/, end: /`/ }
+          ]
+        },
+        {
+          className: 'number',
+          match: /\b\d+(\.\d+)?\b/
+        },
+        {
+          // Function call names like foo() — matched by lookahead for "("
+          className: 'title',
+          match: /[a-zA-Z_][a-zA-Z0-9_]*(?=\s*\()/
+        },
+        {
+          className: 'variable',
+          match: /\b[a-zA-Z_][a-zA-Z0-9_]*\b/
+        }
+      ]
+    };
+
+    // Matches Svelte block directives: {#if …}, {#each …}, {:else}, {/if}, etc.
+    // Must be listed before HTML_TAG so the opening brace isn't swallowed first.
+    const SVELTE_BLOCK = {
+      className: 'keyword',
+      match: /\{[#/:][\w\s.(,)[\]"'`!><=&|+\-*/.?:]+\}/
+    };
+
+    // Generic HTML tag highlighting — covers elements like <div>, <p>, <button>.
+    // Attribute names, values, and inline Svelte bindings are highlighted too.
+    const HTML_TAG = {
+      className: 'tag',
+      begin: /<\/?(?!-)/, // negative lookahead excludes <!-- comment openers
+      end: /\/?>/,
+      contains: [
+        {
+          // Tag name — e.g. div, h3, p, span, button, script, a
+          className: 'name',
+          match: /[a-zA-Z][a-zA-Z0-9]*/,
+          relevance: 0
+        },
+        {
+          // Attribute names — e.g. class, onclick, href, type, bind:value
+          className: 'attr',
+          match: /[a-zA-Z_:][a-zA-Z0-9_:.-]*/
+        },
+        {
+          // Quoted attribute values — e.g. "submit", 'text'
+          className: 'string',
+          variants: [
+            { begin: /"/, end: /"/ },
+            { begin: /'/, end: /'/ }
+          ]
+        },
+        // Svelte event handlers and bindings inside tags — e.g. onclick={fn}
+        SVELTE_EXPRESSION
+      ]
+    };
+
+    // PascalCase component tags like <Greeting />, <UserCard name={x} />
+    // Listed before HTML_TAG so they get className 'title' (usually a
+    // different color) rather than the generic 'tag' class.
+    const COMPONENT_TAG = {
+      className: 'title',
+      match: /<\/?[A-Z][a-zA-Z0-9]*/
+    };
+
+    return {
+      name: 'svelte',
+      contains: [
+        // Svelte template block directives — {#if}, {#each}, {/if}, etc.
+        // Must come before SVELTE_EXPRESSION so the # / : sigil is included.
+        SVELTE_BLOCK,
+        // General {expression} interpolations in markup
+        SVELTE_EXPRESSION,
+        // PascalCase component tags — before HTML_TAG to win the match
+        COMPONENT_TAG,
+        // HTML comments — must come before HTML_TAG so <!-- isn't swallowed
+        // by the tag rule (which matches any <). hljs.COMMENT takes priority here.
+        hljs.COMMENT('<!--', '-->'),
+        // Standard HTML element tags
+        HTML_TAG
+      ]
+    };
+  });
+
+  // ── Svelte block pre-processor ────────────────────────────────────────────
+  //
+  // Before passing a Svelte code snippet to hljs we extract the <script> and
+  // <style> sections, highlight them with their native languages (TypeScript
+  // and CSS respectively), then splice the results back in as raw HTML strings.
+  // This avoids the "subLanguage turns everything one color" problem while
+  // still giving accurate per-token colors inside those sections.
+  //
+  // The remainder (template markup) is then highlighted by the 'svelte'
+  // grammar registered above.
+  function highlightSvelteBlock(decoded: string): string {
+    // RegExp constructor is used here instead of regex literals — and comments
+    // intentionally avoid writing raw angle-bracket tag names — because the
+    // Svelte parser scans inside script blocks for tag-like tokens and throws
+    // a parse error if it finds them, even inside comments or strings.
+    const scriptRe = new RegExp('(<script[^>]*>)([\\s\\S]*?)(<\\/script>)', 'g');
+    // Same workaround applies to the style block pattern.
+    const styleRe  = new RegExp('(<style[^>]*>)([\\s\\S]*?)(<\\/style>)', 'g');
+
+    // We use a plain string sentinel to mark where pre-highlighted blocks live.
+    // Using a sentinel instead of trying to regex-match nested spans avoids the
+    // greedy-span bug where /(<span ...>[\s\S]*?<\/span>)/g collapses multiple
+    // sibling spans into one match and turns everything the same color.
+    const blocks: string[] = [];
+    const SENTINEL = '___SVELTE_BLOCK_';
+
+    // Helper: stash a pre-highlighted HTML string and return its sentinel token
+    function stash(html: string): string {
+      blocks.push(html);
+      return `${SENTINEL}${blocks.length - 1}___`;
+    }
+
+    // tagHl: highlights an opening/closing tag string using the xml grammar,
+    // which correctly colors tag names and attributes with hljs-tag / hljs-name
+    // / hljs-attr spans. We avoid passing tags through the Svelte grammar here
+    // because the Svelte grammar re-escapes < and > internally, which produces
+    // double-encoded entities in the final output.
+    function tagHl(tag: string): string {
+      return hljs.highlight(tag, { language: 'xml' }).value;
+    }
+
+    // Highlight each script block body as TypeScript, stash the whole section.
+    // We highlight using 'javascript' rather than 'typescript' for variable
+    // declarations — the TS grammar emits multi-word classes like "hljs-title
+    // class_" for identifiers in let/const/function statements, which most hljs
+    // themes (including ours) don't have CSS rules for, leaving them white.
+    // The JS grammar emits the simpler single-word classes (hljs-keyword,
+    // hljs-string, hljs-number, hljs-variable, hljs-title) that the theme covers.
+    let processed = decoded.replace(scriptRe, (_, open, body, close) => {
+      const openHl  = tagHl(open);
+      const bodyHl  = hljs.highlight(body.trim(), { language: 'javascript' }).value;
+      const closeHl = tagHl(close);
+      // Re-add newlines so indentation looks correct in the rendered block
+      return stash(`${openHl}\n${bodyHl}\n${closeHl}`);
+    });
+
+    // Highlight each style block body as CSS, stash the whole section.
+    processed = processed.replace(styleRe, (_, open, body, close) => {
+      const openHl  = tagHl(open);
+      const bodyHl  = hljs.highlight(body.trim(), { language: 'css' }).value;
+      const closeHl = tagHl(close);
+      return stash(`${openHl}\n${bodyHl}\n${closeHl}`);
+    });
+
+    // Highlight the remaining template markup (everything outside script/style)
+    // with the Svelte grammar. Sentinel tokens are plain alphanumeric strings so
+    // hljs will not escape or transform them.
+    const templateHl = hljs.highlight(processed, { language: 'svelte' }).value;
+
+    // Splice the stashed script/style sections back in at their sentinel positions
+    return templateHl.replace(
+      new RegExp(`${SENTINEL}(\\d+)___`, 'g'),
+      (_, i) => blocks[Number(i)]
+    );
+  }
 
   // ── Types ────────────────────────────────────────────────────────────────
 
@@ -156,8 +357,12 @@
     const codeBlocks: string[] = [];
     const inlineCodes: string[] = [];
 
-    // Extract fenced code blocks and apply syntax highlighting
+    // Extract fenced code blocks and apply syntax highlighting.
+    // The `lang` capture group maps to a registered hljs language name.
     let result = content.replace(/```(\w*)\s*\n?([\s\S]*?)```/g, (_, lang, code) => {
+      // Markdown content arriving here may still contain HTML entities from
+      // the server — decode them back to raw characters before highlighting
+      // so hljs operates on real source code, not escaped HTML.
       const decoded = code
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
@@ -165,16 +370,25 @@
 
       let highlighted: string;
       try {
-        if (lang && hljs.getLanguage(lang)) {
+        if (lang === 'svelte') {
+          // Svelte blocks need special pre-processing to highlight <script>
+          // and <style> sections independently before the template markup.
+          // See `highlightSvelteBlock` for details.
+          highlighted = highlightSvelteBlock(decoded);
+        } else if (lang && hljs.getLanguage(lang)) {
           highlighted = hljs.highlight(decoded, { language: lang }).value;
+        } else if (!lang) {
+          // Untagged fenced blocks default to the Svelte grammar since most
+          // lesson examples are Svelte component snippets.
+          highlighted = highlightSvelteBlock(decoded);
         } else {
+          // Unknown language tag — let hljs guess from content heuristics.
           highlighted = hljs.highlightAuto(decoded).value;
         }
       } catch {
-        // Fallback to escaped plain text if highlighting fails
-        highlighted = decoded
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
+        // If highlighting fails for any reason, fall back to plain escaped text
+        // so the lesson still renders safely without crashing.
+        highlighted = decoded.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
 
       codeBlocks.push(
@@ -183,7 +397,8 @@
       return `__CODEBLOCK_${codeBlocks.length - 1}__`;
     });
 
-    // Extract inline code
+    // Extract inline code spans — e.g. `myVariable` — before prose processing
+    // so backtick content is never accidentally converted to bold/italic/etc.
     result = result.replace(/`([^`]+)`/g, (_, code) => {
       const decoded = code
         .replace(/&lt;/g, '<')
@@ -196,7 +411,7 @@
       return `__INLINECODE_${inlineCodes.length - 1}__`;
     });
 
-    // Decode remaining prose
+    // Decode remaining prose HTML entities so the final HTML renders correctly
     result = result
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
@@ -215,7 +430,7 @@
       .replace(/\n\n/g, '</p><p>')
       .replace(/^(?!<[hpbuci]|<pre|<block|__)(.+)$/gm, '<p>$1</p>');
 
-    // Restore placeholders
+    // Restore code block and inline code placeholders in order
     result = result.replace(/__CODEBLOCK_(\d+)__/g, (_, i) => codeBlocks[Number(i)]);
     result = result.replace(/__INLINECODE_(\d+)__/g, (_, i) => inlineCodes[Number(i)]);
 
