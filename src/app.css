@@ -98,3 +98,37 @@ html, body {
 :root.light .hljs-title,
 :root.light .hljs-built_in { color: #6f42c1; }
 :root.light .hljs-attr { color: #005cc5; }
+/* Svelte template expressions { } — make them stand out */
+.hljs .hljs-template-variable {
+  color: #abb2bf; /* container braces — neutral */
+}
+
+/* Variables inside expressions */
+.hljs .hljs-template-variable .hljs-variable {
+  color: #e5c07b; /* yellow — like React JSX expressions */
+}
+
+/* Function calls inside expressions */  
+.hljs .hljs-template-variable .hljs-title {
+  color: #61afef; /* blue — function names */
+}
+
+/* Keywords inside expressions */
+.hljs .hljs-template-variable .hljs-keyword {
+  color: #c678dd; /* purple */
+}
+
+/* Svelte runes $state $derived $effect */
+.hljs .hljs-template-variable .hljs-built_in {
+  color: #56b6c2; /* cyan — special */
+}
+
+/* Svelte block keywords {#each} {#if} {/each} */
+.hljs .hljs-keyword {
+  color: #c678dd;
+}
+
+/* String inside expressions */
+.hljs .hljs-template-variable .hljs-string {
+  color: #98c379; /* green */
+}
