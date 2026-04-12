@@ -106,7 +106,7 @@
     // Attribute names, values, and inline Svelte bindings are highlighted too.
     const HTML_TAG = {
       className: 'tag',
-      begin: /<\/?/,
+      begin: /<\/?(?!-)/, // negative lookahead excludes <!-- comment openers
       end: /\/?>/,
       contains: [
         {
@@ -151,10 +151,11 @@
         SVELTE_EXPRESSION,
         // PascalCase component tags — before HTML_TAG to win the match
         COMPONENT_TAG,
+        // HTML comments — must come before HTML_TAG so <!-- isn't swallowed
+        // by the tag rule (which matches any <). hljs.COMMENT takes priority here.
+        hljs.COMMENT('<!--', '-->'),
         // Standard HTML element tags
-        HTML_TAG,
-        // HTML comments — <!-- … -->
-        hljs.COMMENT('<!--', '-->')
+        HTML_TAG
       ]
     };
   });
@@ -191,23 +192,36 @@
       return `${SENTINEL}${blocks.length - 1}___`;
     }
 
+    // tagHl: highlights an opening/closing tag string using the xml grammar,
+    // which correctly colors tag names and attributes with hljs-tag / hljs-name
+    // / hljs-attr spans. We avoid passing tags through the Svelte grammar here
+    // because the Svelte grammar re-escapes < and > internally, which produces
+    // double-encoded entities in the final output.
+    function tagHl(tag: string): string {
+      return hljs.highlight(tag, { language: 'xml' }).value;
+    }
+
     // Highlight each script block body as TypeScript, stash the whole section.
-    // The opening/closing tag strings are highlighted via the Svelte tag grammar
-    // by passing them through hljs separately — NOT via escapeHtml, which would
-    // turn them into visible plain text instead of colored tokens.
+    // We highlight using 'javascript' rather than 'typescript' for variable
+    // declarations — the TS grammar emits multi-word classes like "hljs-title
+    // class_" for identifiers in let/const/function statements, which most hljs
+    // themes (including ours) don't have CSS rules for, leaving them white.
+    // The JS grammar emits the simpler single-word classes (hljs-keyword,
+    // hljs-string, hljs-number, hljs-variable, hljs-title) that the theme covers.
     let processed = decoded.replace(scriptRe, (_, open, body, close) => {
-      const openHl  = hljs.highlight(open,  { language: 'svelte' }).value;
-      const bodyHl  = hljs.highlight(body,  { language: 'typescript' }).value;
-      const closeHl = hljs.highlight(close, { language: 'svelte' }).value;
-      return stash(openHl + bodyHl + closeHl);
+      const openHl  = tagHl(open);
+      const bodyHl  = hljs.highlight(body.trim(), { language: 'javascript' }).value;
+      const closeHl = tagHl(close);
+      // Re-add newlines so indentation looks correct in the rendered block
+      return stash(`${openHl}\n${bodyHl}\n${closeHl}`);
     });
 
     // Highlight each style block body as CSS, stash the whole section.
     processed = processed.replace(styleRe, (_, open, body, close) => {
-      const openHl  = hljs.highlight(open,  { language: 'svelte' }).value;
-      const bodyHl  = hljs.highlight(body,  { language: 'css' }).value;
-      const closeHl = hljs.highlight(close, { language: 'svelte' }).value;
-      return stash(openHl + bodyHl + closeHl);
+      const openHl  = tagHl(open);
+      const bodyHl  = hljs.highlight(body.trim(), { language: 'css' }).value;
+      const closeHl = tagHl(close);
+      return stash(`${openHl}\n${bodyHl}\n${closeHl}`);
     });
 
     // Highlight the remaining template markup (everything outside script/style)

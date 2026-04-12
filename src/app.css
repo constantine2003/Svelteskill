@@ -77,58 +77,89 @@ html, body {
   color: var(--code-block-text);
 }
 
+/* ── hljs token colors scoped to lesson code blocks ─────────────────────────
+   All rules below use .lesson-content pre code as a prefix so they always
+   win over the base color set on the <code> element above. Without this
+   specificity boost, plain variable names (which hljs emits without any span)
+   correctly inherit --code-block-text, but spanned tokens can still lose to
+   the cascade in some browsers.
+────────────────────────────────────────────────────────────────────────────── */
+
+.lesson-content pre code .hljs-keyword,
+.lesson-content pre code .hljs-selector-tag { color: #c678dd; }
+
+.lesson-content pre code .hljs-string,
+.lesson-content pre code .hljs-addition { color: #98c379; }
+
+.lesson-content pre code .hljs-number,
+.lesson-content pre code .hljs-literal { color: #d19a66; }
+
+.lesson-content pre code .hljs-variable,
+.lesson-content pre code .hljs-params { color: #e06c75; }
+
+/* hljs-title function_ and hljs-title class_ are two-class combos —
+   [class~=] matches any element whose class list contains that word */
+.lesson-content pre code [class~="hljs-title"] { color: #61afef; }
+
+.lesson-content pre code .hljs-built_in { color: #56b6c2; }
+
+.lesson-content pre code .hljs-comment,
+.lesson-content pre code .hljs-quote { color: #6b6866; font-style: italic; }
+
+.lesson-content pre code .hljs-tag { color: #e06c75; }
+.lesson-content pre code .hljs-tag .hljs-name { color: #e06c75; }
+.lesson-content pre code .hljs-attr { color: #d19a66; }
+.lesson-content pre code .hljs-tag .hljs-string { color: #98c379; }
+
+.lesson-content pre code .hljs-property { color: #56b6c2; }
+.lesson-content pre code .hljs-selector-class,
+.lesson-content pre code .hljs-selector-id { color: #e06c75; }
+
+.lesson-content pre code .hljs-template-variable { color: #abb2bf; }
+.lesson-content pre code .hljs-template-variable .hljs-variable { color: #e5c07b; }
+.lesson-content pre code .hljs-template-variable [class~="hljs-title"] { color: #61afef; }
+.lesson-content pre code .hljs-template-variable .hljs-keyword { color: #c678dd; }
+.lesson-content pre code .hljs-template-variable .hljs-built_in { color: #56b6c2; }
+.lesson-content pre code .hljs-template-variable .hljs-string { color: #98c379; }
+.lesson-content pre code .hljs-template-variable .hljs-number { color: #d19a66; }
+
+.lesson-content pre code .hljs-deletion { color: #e06c75; }
+.lesson-content pre code .hljs-meta { color: #61afef; }
+
+/* Light mode overrides — same specificity pattern */
+:root.light .lesson-content pre code .hljs-keyword,
+:root.light .lesson-content pre code .hljs-selector-tag { color: #d73a49; }
+
+:root.light .lesson-content pre code .hljs-string,
+:root.light .lesson-content pre code .hljs-addition { color: #22863a; }
+
+:root.light .lesson-content pre code .hljs-number,
+:root.light .lesson-content pre code .hljs-literal { color: #e36209; }
+
+:root.light .lesson-content pre code .hljs-variable,
+:root.light .lesson-content pre code .hljs-params { color: #e36209; }
+
+:root.light .lesson-content pre code [class~="hljs-title"] { color: #6f42c1; }
+:root.light .lesson-content pre code .hljs-built_in { color: #005cc5; }
+
+:root.light .lesson-content pre code .hljs-comment,
+:root.light .lesson-content pre code .hljs-quote { color: #6a737d; }
+
+:root.light .lesson-content pre code .hljs-tag { color: #22863a; }
+:root.light .lesson-content pre code .hljs-tag .hljs-name { color: #22863a; }
+:root.light .lesson-content pre code .hljs-attr { color: #005cc5; }
+:root.light .lesson-content pre code .hljs-tag .hljs-string { color: #032f62; }
+
+:root.light .lesson-content pre code .hljs-property { color: #005cc5; }
+:root.light .lesson-content pre code .hljs-template-variable { color: #24292e; }
+:root.light .lesson-content pre code .hljs-template-variable .hljs-variable { color: #e36209; }
+:root.light .lesson-content pre code .hljs-template-variable [class~="hljs-title"] { color: #6f42c1; }
+:root.light .lesson-content pre code .hljs-template-variable .hljs-keyword { color: #d73a49; }
+:root.light .lesson-content pre code .hljs-template-variable .hljs-built_in { color: #005cc5; }
+:root.light .lesson-content pre code .hljs-template-variable .hljs-string { color: #22863a; }
+:root.light .lesson-content pre code .hljs-template-variable .hljs-number { color: #e36209; }
+
 .lesson-content blockquote {
   background: var(--orange-faint);
   color: var(--text-muted);
-}
-
-/* Light mode code blocks */
-:root.light .hljs {
-  background: #f0ede8;
-  color: #24292e;
-}
-:root.light .hljs-comment,
-:root.light .hljs-quote { color: #6a737d; }
-:root.light .hljs-keyword,
-:root.light .hljs-selector-tag { color: #d73a49; }
-:root.light .hljs-string,
-:root.light .hljs-addition { color: #22863a; }
-:root.light .hljs-number,
-:root.light .hljs-variable { color: #e36209; }
-:root.light .hljs-title,
-:root.light .hljs-built_in { color: #6f42c1; }
-:root.light .hljs-attr { color: #005cc5; }
-/* Svelte template expressions { } — make them stand out */
-.hljs .hljs-template-variable {
-  color: #abb2bf; /* container braces — neutral */
-}
-
-/* Variables inside expressions */
-.hljs .hljs-template-variable .hljs-variable {
-  color: #e5c07b; /* yellow — like React JSX expressions */
-}
-
-/* Function calls inside expressions */  
-.hljs .hljs-template-variable .hljs-title {
-  color: #61afef; /* blue — function names */
-}
-
-/* Keywords inside expressions */
-.hljs .hljs-template-variable .hljs-keyword {
-  color: #c678dd; /* purple */
-}
-
-/* Svelte runes $state $derived $effect */
-.hljs .hljs-template-variable .hljs-built_in {
-  color: #56b6c2; /* cyan — special */
-}
-
-/* Svelte block keywords {#each} {#if} {/each} */
-.hljs .hljs-keyword {
-  color: #c678dd;
-}
-
-/* String inside expressions */
-.hljs .hljs-template-variable .hljs-string {
-  color: #98c379; /* green */
 }
