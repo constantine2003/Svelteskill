@@ -79,9 +79,12 @@
     <!-- ── Profile header ────────────────────────────────────────────────
          Shows the learner's avatar, display name, full name (if different),
          join date, and total certificate count.
+
+         Layout: stacks vertically on mobile (flex-col), switches to a
+         horizontal row on sm+ (sm:flex-row).
     ──────────────────────────────────────────────────────────────────── -->
     <div
-      class="flex items-start gap-6 mb-14 pb-14"
+      class="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-10 sm:mb-14 pb-10 sm:pb-14"
       style="border-bottom: 1px solid var(--border)"
     >
 
@@ -123,8 +126,10 @@
           </p>
         {/if}
 
-        <!-- Join date + certificate count -->
-        <div class="flex items-center gap-4">
+        <!-- Join date + certificate count
+             flex-wrap + gap-y-2 ensures the row wraps gracefully on
+             very narrow screens instead of overflowing. -->
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <span
             class="font-mono text-[10px] uppercase tracking-widest"
             style="color: var(--text-faint)"
@@ -179,7 +184,15 @@
                 style="background: linear-gradient(to right, #FF3E00, rgba(255,62,0,0.1))"
               ></div>
 
-              <div class="p-6 flex items-center justify-between gap-6">
+              <!--
+                Card body
+                ─────────
+                Stacks vertically on mobile (flex-col) so the track info
+                and the action buttons don't get squeezed side-by-side.
+                Switches to a horizontal space-between row on sm+.
+                Padding is also reduced on mobile (p-4 → sm:p-6).
+              -->
+              <div class="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
 
                 <div class="flex items-center gap-4">
 
@@ -208,7 +221,10 @@
 
                 </div>
 
-                <div class="flex items-center gap-3 flex-shrink-0">
+                <!-- Verified badge + view link
+                     flex-shrink-0 only applied on sm+ so the row doesn't
+                     compress the badge text on narrow viewports. -->
+                <div class="flex items-center gap-3 sm:flex-shrink-0">
 
                   <!-- Verified badge — pulsing dot signals the cert is live/checkable -->
                   <div class="flex items-center gap-1.5">
@@ -229,10 +245,7 @@
                     rel="external"
                     href="/verify/{cert.id}"
                     class="font-mono text-[10px] px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
-                    style="
-                      color:      var(--text-muted);
-                      border:     1px solid var(--border);
-                    "
+                    style="color: var(--text-muted); border: 1px solid var(--border)"
                   >
                     View →
                   </a>
@@ -277,9 +290,10 @@
     <!-- ── CTA for visitors ───────────────────────────────────────────────
          Shown at the bottom of every public profile to convert visitors
          into new learners. Links to the auth page to start sign-up.
+         Top margin and padding reduced on mobile (mt-10 pt-8 → sm:mt-14 sm:pt-10).
     ──────────────────────────────────────────────────────────────────── -->
     <div
-      class="mt-14 pt-10 text-center"
+      class="mt-10 sm:mt-14 pt-8 sm:pt-10 text-center"
       style="border-top: 1px solid var(--border)"
     >
       <p class="text-sm font-light mb-4" style="color: var(--text-faint)">
